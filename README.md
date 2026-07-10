@@ -1,5 +1,7 @@
 # KnowledgeRAG: Enterprise AI Knowledge Platform
 
+**Live Demo**: [https://knowledgeai-app-2587.azurewebsites.net/](https://knowledgeai-app-2587.azurewebsites.net/)
+
 **KnowledgeRAG** is an enterprise-grade, multi-tenant Retrieval-Augmented Generation (RAG) platform designed to help teams organize, query, and interact with their internal data securely. 
 
 Built with a lightning-fast FastAPI/PostgreSQL backend and a sleek, zero-dependency Vanilla JS frontend, it utilizes vector embeddings (`pgvector`) to provide highly accurate, context-aware AI interactions.
