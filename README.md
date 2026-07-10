@@ -1,39 +1,53 @@
-# Enterprise AI Knowledge Platform
+# KnowledgeRAG: Enterprise AI Knowledge Platform
 
-An enterprise-grade, multi-tenant Retrieval-Augmented Generation (RAG) platform. Built with FastAPI, this application provides role-based access control (RBAC), streaming chat interfaces, and multi-provider LLM support.
+**KnowledgeRAG** is an enterprise-grade, multi-tenant Retrieval-Augmented Generation (RAG) platform designed to help teams organize, query, and interact with their internal data securely. 
 
-## Features
+Built with a lightning-fast FastAPI/PostgreSQL backend and a sleek, zero-dependency Vanilla JS frontend, it utilizes vector embeddings (`pgvector`) to provide highly accurate, context-aware AI interactions.
 
-- **Multi-Tenant Architecture**: Isolate data and conversations by workspace/organization.
-- **Advanced RAG**: Document uploading, chunking, and vector search.
-- **Multi-Provider LLM Integration**: Support for OpenAI, Google Gemini, Groq, OpenRouter, and local Ollama models.
-- **Streaming Chat**: Real-time token streaming for a responsive user experience.
-- **Role-Based Access Control (RBAC)**: Secure access management for administrators and regular users.
+## Key Features
 
-## Prerequisites
+- **Multi-Tenant Workspaces**: Completely isolate data, users, and conversations by team or organization.
+- **Robust Security & Auth**: OTP email verification, secure JWT session management, and granular Role-Based Access Control (RBAC) separating Workspace Owners and standard Members.
+- **Smart Document Processing**: Upload, chunk, and intelligently embed documents into a vector database for ultra-fast semantic search.
+- **LLM Agnostic**: Seamlessly plug in external providers (like OpenAI, Google Gemini, Groq, OpenRouter) or run 100% locally with Ollama models.
+- **Real-time Streaming Chat**: Token-by-token streaming responses for a snappy, ChatGPT-like user experience.
+- **Azure Ready**: Fully containerized with automated PowerShell scripts for effortless deployment to Azure App Service and PostgreSQL Flexible Server.
 
-- Python 3.11+
-- [uv](https://github.com/astral-sh/uv) (Extremely fast Python package installer and resolver)
-- PostgreSQL with `pgvector` extension enabled
+## Tech Stack
 
-## Installation & Setup
+- **Backend**: FastAPI (Python 3.11+), SQLAlchemy 2.0 (Async)
+- **Database**: PostgreSQL with `pgvector` extension
+- **Frontend**: Vanilla JavaScript (ES Modules), Vanilla CSS
+- **Package Manager**: [uv](https://github.com/astral-sh/uv)
+
+## Local Installation & Setup
 
 1. **Clone the repository and install dependencies**
    We use `uv` for lightning-fast dependency management:
    ```powershell
+   git clone https://github.com/Akshumishra/KnowledgeRAG1.git
+   cd KnowledgeRAG1
    uv sync
    ```
 
 2. **Environment Configuration**
-   Create a `.env` file in the root directory (or copy from `.env.example` if available) and configure your secrets:
+   Create a `.env` file in the root directory and configure your secrets:
    ```env
    # Application
    APP_ENV=development
    SECRET_KEY=your-super-secret-key
    ENCRYPTION_KEY=your-fernet-encryption-key
    
-   # Database
+   # Database (Ensure pgvector is installed)
    DATABASE_URL=postgresql+psycopg://user:password@localhost:5432/knowledge_platform
+   
+   # SMTP for Email Verification
+   SMTP_HOST=smtp-relay.brevo.com
+   SMTP_PORT=587
+   SMTP_USER=your_smtp_user
+   SMTP_PASSWORD=your_smtp_password
+   SMTP_FROM_EMAIL=your_email@gmail.com
+   SMTP_USE_TLS=true
    
    # LLM Providers (Configure the ones you want to use)
    OPENAI_API_KEY=sk-...
@@ -42,23 +56,19 @@ An enterprise-grade, multi-tenant Retrieval-Augmented Generation (RAG) platform.
    ```
 
 3. **Start the Application**
-   Run the provided startup script to launch the FastAPI server:
+   Run the provided startup script to launch the FastAPI server and initialize database migrations:
    ```powershell
    ./start.ps1
    ```
-   
-   *Note: If you encounter an "Access is denied" error during `uv sync` or startup, ensure no other terminals or IDE language servers (like Pylance) are locking the `.venv` directory.*
+   The application will be available at `http://localhost:8000`.
 
-## Architecture
+## Azure Deployment
 
-- **Backend**: FastAPI (Python) using asynchronous routing and SQLAlchemy 2.0.
-- **Database**: PostgreSQL with `pgvector` for embeddings.
-- **LLM Providers**: Abstraction layer seamlessly switching between OpenAI, Gemini, Groq, and Ollama.
+This repository includes fully automated deployment scripts for Microsoft Azure.
 
-## Troubleshooting
+1. **First-time Deployment**: 
+   Run `.\Deployment_Scripts\deploy_to_azure.ps1`. 
+   The script will interactively ask for your API keys and SMTP credentials, provision a Resource Group, Azure Container Registry, PostgreSQL Flexible Server, and an App Service, and securely inject your configuration.
 
-- **Gemini SDK Warning**: The backend has been migrated to use the latest `google-genai` SDK. Ensure you have run `uv sync` to apply this update and remove the deprecated `google-generativeai` package.
-- **Missing Migrations**: If your database schema is outdated, ensure alembic migrations are run (usually handled automatically in `start.ps1` or run `alembic upgrade head`).
-
-## License
-Private and Confidential. All rights reserved.
+2. **Deploying Updates**:
+   When you make changes to the code, simply run `.\Deployment_Scripts\update_azure.ps1` to rebuild the Docker image and push the latest version to your live environment.
