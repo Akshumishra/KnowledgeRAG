@@ -24,12 +24,14 @@ class UserResponse(BaseModel):
 
     model_config = {"from_attributes": True}
 
+
 class UserActivityRequest(BaseModel):
     last_route: str
     last_conversation_id: Optional[str] = None
 
+
 class UserActivityResponse(BaseModel):
     last_route: str
     last_conversation_id: Optional[str] = None
-    
+
     model_config = {"from_attributes": True}

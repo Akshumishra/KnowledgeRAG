@@ -38,7 +38,9 @@ async def remove_user_from_workspace(
         user_id, current_user.workspace_id, current_user
     )
 
+
 from src.schemas.user import UserActivityRequest, UserActivityResponse
+
 
 @router.get("/activity", response_model=UserActivityResponse)
 async def get_user_activity(
@@ -47,6 +49,7 @@ async def get_user_activity(
 ):
     activity = await service.get_activity(current_user.id)
     return UserActivityResponse.model_validate(activity)
+
 
 @router.post("/activity", response_model=UserActivityResponse)
 async def update_user_activity(
@@ -58,4 +61,3 @@ async def update_user_activity(
         current_user.id, request.last_route, request.last_conversation_id
     )
     return UserActivityResponse.model_validate(activity)
-

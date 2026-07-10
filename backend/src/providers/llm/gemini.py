@@ -17,7 +17,7 @@ class GeminiProvider(BaseLLMProvider):
         config_kwargs = {}
         if system_prompt:
             config_kwargs["system_instruction"] = system_prompt
-        
+
         messages = kwargs.get("messages")
         if messages:
             contents = []
@@ -29,14 +29,22 @@ class GeminiProvider(BaseLLMProvider):
             response = await self.client.aio.models.generate_content(
                 model=model_name,
                 contents=contents,
-                config=types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+                config=(
+                    types.GenerateContentConfig(**config_kwargs)
+                    if config_kwargs
+                    else None
+                ),
             )
             return response.text
         else:
             response = await self.client.aio.models.generate_content(
                 model=model_name,
                 contents=prompt,
-                config=types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+                config=(
+                    types.GenerateContentConfig(**config_kwargs)
+                    if config_kwargs
+                    else None
+                ),
             )
             return response.text
 
@@ -60,13 +68,21 @@ class GeminiProvider(BaseLLMProvider):
             response_stream = await self.client.aio.models.generate_content_stream(
                 model=model_name,
                 contents=contents,
-                config=types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+                config=(
+                    types.GenerateContentConfig(**config_kwargs)
+                    if config_kwargs
+                    else None
+                ),
             )
         else:
             response_stream = await self.client.aio.models.generate_content_stream(
                 model=model_name,
                 contents=prompt,
-                config=types.GenerateContentConfig(**config_kwargs) if config_kwargs else None
+                config=(
+                    types.GenerateContentConfig(**config_kwargs)
+                    if config_kwargs
+                    else None
+                ),
             )
 
         async for chunk in response_stream:

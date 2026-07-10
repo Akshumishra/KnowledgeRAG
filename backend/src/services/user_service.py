@@ -62,6 +62,7 @@ class UserService:
 
     async def get_activity(self, user_id: str):
         from src.models.auth import UserActivity
+
         async with self.uow:
             stmt = select(UserActivity).where(UserActivity.user_id == user_id)
             result = await self.uow.session.execute(stmt)
@@ -72,8 +73,11 @@ class UserService:
                 await self.uow.commit()
             return activity
 
-    async def update_activity(self, user_id: str, last_route: str, last_conversation_id: str = None):
+    async def update_activity(
+        self, user_id: str, last_route: str, last_conversation_id: str = None
+    ):
         from src.models.auth import UserActivity
+
         async with self.uow:
             stmt = select(UserActivity).where(UserActivity.user_id == user_id)
             result = await self.uow.session.execute(stmt)
@@ -90,4 +94,3 @@ class UserService:
                 self.uow.session.add(activity)
             await self.uow.commit()
             return activity
-

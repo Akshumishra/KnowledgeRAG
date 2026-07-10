@@ -34,6 +34,7 @@ class FamilyProfileResolver:
 
         return None
 
+
 class ModelCapabilityManager:
     """Centralized service for managing model capabilities and registry."""
 

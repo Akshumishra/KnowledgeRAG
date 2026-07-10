@@ -15,7 +15,6 @@ Write-Host ('Logged into Azure Subscription: ' + $azAccount) -ForegroundColor Gr
 Write-Host ''
 Write-Host '[1/3] Finding existing KnowledgeAI deployment...' -ForegroundColor Cyan
 
-# Find the app automatically
 $appName = az webapp list --query "[?contains(name, 'knowledgeai-app-')].name | [0]" -o tsv
 if (-not $appName) {
     Write-Host 'ERROR: Could not find an existing KnowledgeAI web app.' -ForegroundColor Red

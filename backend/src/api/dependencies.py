@@ -60,9 +60,7 @@ async def get_current_user(
                 member = (await uow.session.execute(stmt)).scalars().first()
                 if not member:
                     raise UnauthorizedError("User not a member of this workspace")
-                user.workspace_id = (
-                    workspace_id
-                )
+                user.workspace_id = workspace_id
                 user.is_owner = member.is_owner
             else:
                 user.workspace_id = None

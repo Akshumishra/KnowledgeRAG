@@ -29,7 +29,7 @@ async def stream_chat(
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
-        }
+        },
     )
 
 
@@ -59,13 +59,16 @@ async def stream_existing_message(
     service = ChatService(uow, llm_factory)
     return StreamingResponse(
         service.stream_existing_message(
-            conversation_id, message_id, current_user.workspace_id, current_user, request
+            conversation_id,
+            message_id,
+            current_user.workspace_id,
+            current_user,
+            request,
         ),
         media_type="text/event-stream",
         headers={
             "Cache-Control": "no-cache",
             "Connection": "keep-alive",
             "X-Accel-Buffering": "no",
-        }
+        },
     )
-

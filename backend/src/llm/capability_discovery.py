@@ -75,7 +75,7 @@ class DiscoveryService:
             "messages": [{"role": "user", "content": "Say OK"}],
             "temperature": 0.7,
             "max_tokens": 10,
-            "stream": True
+            "stream": True,
         }
 
         max_attempts = 3

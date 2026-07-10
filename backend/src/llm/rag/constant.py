@@ -20,10 +20,8 @@ class RAGConstant:
     ]
     FALLBACK_GROQ_MODELS = [
         {"id": "openai/gpt-oss-20b", "name": "openai/gpt-oss-20b"},
-        {"id": "llama-3.1-8b-instant", "name": "llama-3.1-8b-instant"}
+        {"id": "llama-3.1-8b-instant", "name": "llama-3.1-8b-instant"},
     ]
-    FALLBACK_GEMINI_MODELS = [
-        {"id": "gemini-2.5-flash", "name": "gemini-2.5-flash"}
-    ]
+    FALLBACK_GEMINI_MODELS = [{"id": "gemini-2.5-flash", "name": "gemini-2.5-flash"}]
     OPENAI_DEFAULT_MODEL = "gpt-4.1-mini"
     GEMINI_DEFAULT_MODEL = "gemini-2.5-flash"

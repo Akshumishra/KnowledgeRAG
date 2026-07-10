@@ -12,7 +12,12 @@ from fastapi import Request
 from sqlalchemy import select, update
 
 from src.services.stream_manager import stream_manager
-from src.core.exceptions import NotFoundError, ForbiddenError, BadRequestError, ConflictError
+from src.core.exceptions import (
+    NotFoundError,
+    ForbiddenError,
+    BadRequestError,
+    ConflictError,
+)
 from src.database.uow import UnitOfWork
 from src.database.repositories.chat import (
     ConversationRepository,
@@ -50,20 +55,20 @@ class ChatService:
             conv = await conv_repo.get(conversation_id)
             if not conv or conv.workspace_id != workspace_id:
                 raise NotFoundError("Conversation", conversation_id)
-            
+
             if conv.user_id != actor.id and not getattr(actor, "is_owner", False):
                 raise ForbiddenError()
-                
+
             msg_repo = MessageRepository(self.uow.session)
             msg = await msg_repo.get(message_id)
             if not msg or msg.conversation_id != conversation_id:
                 raise NotFoundError("Message", message_id)
-                
+
             return {
                 "id": msg.id,
                 "status": msg.status,
                 "content": msg.content,
-                "error_message": msg.error_message
+                "error_message": msg.error_message,
             }
 
     async def stream_chat(
@@ -87,13 +92,19 @@ class ChatService:
             if conv.user_id != actor.id and not getattr(actor, "is_owner", False):
                 raise ForbiddenError()
 
-            stmt = select(Message.id).where(
-                Message.conversation_id == conversation_id,
-                Message.status.in_(["thinking", "generating"])
-            ).limit(1)
+            stmt = (
+                select(Message.id)
+                .where(
+                    Message.conversation_id == conversation_id,
+                    Message.status.in_(["thinking", "generating"]),
+                )
+                .limit(1)
+            )
             result = await self.uow.session.execute(stmt)
             if result.first():
-                raise ConflictError("A generation is already in progress for this conversation.")
+                raise ConflictError(
+                    "A generation is already in progress for this conversation."
+                )
 
             stmt = (
                 select(Message)
@@ -102,14 +113,21 @@ class ChatService:
             )
             result = await self.uow.session.execute(stmt)
             db_messages = result.scalars().all()
-            chat_history = [{"role": m.role, "content": m.content} for m in db_messages if m.status == "completed"]
+            chat_history = [
+                {"role": m.role, "content": m.content}
+                for m in db_messages
+                if m.status == "completed"
+            ]
 
             msg_repo.add(
                 Message(
-                    conversation_id=conversation_id, role="user", content=data.message, status="completed"
+                    conversation_id=conversation_id,
+                    role="user",
+                    content=data.message,
+                    status="completed",
                 )
             )
-            
+
             generation_id = str(uuid.uuid4())
             assistant_msg = Message(
                 conversation_id=conversation_id,
@@ -117,13 +135,13 @@ class ChatService:
                 content="",
                 status="thinking",
                 generation_id=generation_id,
-                started_at=datetime.now(timezone.utc)
+                started_at=datetime.now(timezone.utc),
             )
             msg_repo.add(assistant_msg)
-            
+
             await self.uow.commit()
             assistant_msg_id = assistant_msg.id
-            
+
             provider_id = data.model_provider or "openai"
             model_name = data.model_name or "gpt-5-nano"
 
@@ -138,7 +156,7 @@ class ChatService:
                         f"No valid API key configured for {provider_id}"
                     )
                 api_key = decrypt(api_key_record.encrypted_key)
-                
+
             llm_provider: BaseLLMProvider = self.llm_factory(provider_id, api_key)
 
         queue = asyncio.Queue()
@@ -154,7 +172,7 @@ class ChatService:
                 chat_history,
                 provider_id,
                 model_name,
-                llm_provider
+                llm_provider,
             )
         )
 
@@ -163,17 +181,19 @@ class ChatService:
             init_event = f"event: thinking\ndata: {json.dumps({'message_id': assistant_msg_id})}\n\n"
             yield init_event
             await stream_manager.push_event(assistant_msg_id, init_event)
-            
+
             while True:
                 if await request.is_disconnected():
-                    logger.info("Client disconnected during stream. Background task will continue.")
+                    logger.info(
+                        "Client disconnected during stream. Background task will continue."
+                    )
                     break
-                
+
                 try:
                     event = await asyncio.wait_for(queue.get(), timeout=1.0)
                     if event is None:
                         break
-                        
+
                     yield event
                 except asyncio.TimeoutError:
                     continue
@@ -198,7 +218,10 @@ class ChatService:
             if conv.user_id != actor.id and not getattr(actor, "is_owner", False):
                 raise ForbiddenError()
 
-        if stream_manager.is_done(message_id) and message_id not in stream_manager.buffers:
+        if (
+            stream_manager.is_done(message_id)
+            and message_id not in stream_manager.buffers
+        ):
             # If already done and buffer cleaned up, just return
             yield f"event: done\ndata: {{}}\n\n"
             return
@@ -233,7 +256,6 @@ class ChatService:
             if message_id in stream_manager.clients:
                 stream_manager.clients[message_id].discard(queue)
 
-
     async def _background_generate(
         self,
         queue: asyncio.Queue,
@@ -245,7 +267,7 @@ class ChatService:
         chat_history: list,
         provider_id: str,
         model_name: str,
-        llm_provider: BaseLLMProvider
+        llm_provider: BaseLLMProvider,
     ):
         uow = UnitOfWork()
         try:
@@ -353,9 +375,11 @@ class ChatService:
 
                     stream_gen = _yield_rest()
                 except StopAsyncIteration:
+
                     async def _empty():
                         yield ""
                         return
+
                     stream_gen = _empty()
                 except Exception as e:
                     error_msg = str(e)
@@ -404,7 +428,7 @@ class ChatService:
                 stats_str = f"event: stats\ndata: {json.dumps(final_stats)}\n\n"
                 await queue.put(stats_str)
                 await stream_manager.push_event(assistant_msg_id, stats_str)
-                
+
                 done_str = f"event: done\ndata: {{}}\n\n"
                 await queue.put(done_str)
                 await stream_manager.push_event(assistant_msg_id, done_str)
@@ -420,8 +444,10 @@ class ChatService:
                         total_tokens=total_tokens,
                         model_id=model_name,
                         latency_ms=latency_ms,
-                        sources_json=(_json.dumps(sources_data) if sources_data else None),
-                        completed_at=datetime.now(timezone.utc)
+                        sources_json=(
+                            _json.dumps(sources_data) if sources_data else None
+                        ),
+                        completed_at=datetime.now(timezone.utc),
                     )
                 )
                 await uow.session.execute(stmt)
@@ -431,10 +457,12 @@ class ChatService:
             traceback.print_exc()
             try:
                 error_str = str(e)
-                event_str = f"event: error\ndata: {json.dumps({'message': error_str})}\n\n"
+                event_str = (
+                    f"event: error\ndata: {json.dumps({'message': error_str})}\n\n"
+                )
                 await queue.put(event_str)
                 await stream_manager.push_event(assistant_msg_id, event_str)
-                
+
                 async with UnitOfWork() as error_uow:
                     stmt = (
                         update(Message)
@@ -442,7 +470,7 @@ class ChatService:
                         .values(
                             status="failed",
                             error_message=error_str,
-                            completed_at=datetime.now(timezone.utc)
+                            completed_at=datetime.now(timezone.utc),
                         )
                     )
                     await error_uow.session.execute(stmt)

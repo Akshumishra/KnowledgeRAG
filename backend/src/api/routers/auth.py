@@ -124,9 +124,7 @@ async def enter_workspace(
 
 
 @router.get("/me")
-async def me(
-    current_user: User = Depends(get_current_user)
-):
+async def me(current_user: User = Depends(get_current_user)):
     return {
         "id": current_user.id,
         "email": current_user.email,

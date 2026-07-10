@@ -2,7 +2,6 @@ import abc
 from typing import AsyncGenerator, Dict, List
 
 
-
 class BaseLLMProvider(abc.ABC):
     """
     Abstract interface for interacting with LLM providers (OpenAI, Gemini, local, etc.).

@@ -86,4 +86,3 @@ class UserActivity(BaseModel):
     last_conversation_id: Mapped[Optional[str]] = mapped_column(
         String(36), nullable=True
     )
-

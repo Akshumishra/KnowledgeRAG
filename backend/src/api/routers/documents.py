@@ -80,10 +80,11 @@ async def get_media(
 
     if current_user.workspace_id != workspace_id:
         raise ForbiddenError("You do not have access to this workspace's media.")
-    
+
     path = os.path.join(settings.upload_dir, workspace_id, filename)
 
     try:
+
         async def stream():
             async for chunk in storage.get_stream(path):
                 yield chunk

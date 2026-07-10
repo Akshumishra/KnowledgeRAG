@@ -25,13 +25,21 @@ class Message(BaseModel):
     )
     role: Mapped[str] = mapped_column(String(20))
     content: Mapped[str] = mapped_column(Text)
-    
-    status: Mapped[str] = mapped_column(String(20), default="completed") # 'thinking', 'generating', 'completed', 'failed'
-    generation_id: Mapped[Optional[str]] = mapped_column(String(36), nullable=True, index=True)
-    started_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
-    completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
+
+    status: Mapped[str] = mapped_column(
+        String(20), default="completed"
+    )  # 'thinking', 'generating', 'completed', 'failed'
+    generation_id: Mapped[Optional[str]] = mapped_column(
+        String(36), nullable=True, index=True
+    )
+    started_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
+    completed_at: Mapped[Optional[datetime]] = mapped_column(
+        DateTime(timezone=True), nullable=True
+    )
     error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-    
+
     prompt_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     completion_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
     total_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
@@ -40,4 +48,3 @@ class Message(BaseModel):
     sources_json: Mapped[Optional[str]] = mapped_column(
         Text, nullable=True
     )  # JSON array
-

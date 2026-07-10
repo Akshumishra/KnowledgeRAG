@@ -1,4 +1,3 @@
-
 from __future__ import annotations
 
 import logging
@@ -57,7 +56,7 @@ async def lifespan(app: FastAPI):
                 session.add_all(providers)
                 await session.commit()
             logger.info("Seeded default LLM providers.")
-        
+
         cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
         stmt = (
             update(Message)
@@ -73,7 +72,6 @@ async def lifespan(app: FastAPI):
         )
         await conn.execute(stmt)
         logger.info("Recovered stuck messages (if any).")
-
 
     yield
 

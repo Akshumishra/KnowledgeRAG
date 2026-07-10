@@ -1,7 +1,9 @@
 from typing import List, Dict
 
+
 class DefaultLLMProviders:
     """Default LLM Providers to seed the database."""
+
     PROVIDERS = [
         {
             "slug": "openai",
@@ -38,6 +40,7 @@ class DefaultLLMProviders:
 
 class LLMModelConstants:
     """Default models for various providers."""
+
     DEFAULT_GROQ_MODEL = "llama3-8b-8192"
     DEFAULT_OLLAMA_MODEL = "llama3"
     DEFAULT_OPENROUTER_MODEL = "openai/gpt-4o"

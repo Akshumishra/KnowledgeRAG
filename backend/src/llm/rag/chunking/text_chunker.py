@@ -29,7 +29,10 @@ def semantic_chunk_blocks(
     def _flush_pending():
         nonlocal chunk_index, pending_chunk
         if pending_chunk:
-            if _count_tokens(pending_chunk["content"]) < RAGConstant.MIN_CHUNK_SIZE and chunks:
+            if (
+                _count_tokens(pending_chunk["content"]) < RAGConstant.MIN_CHUNK_SIZE
+                and chunks
+            ):
                 chunks[-1]["content"] += "\n\n" + pending_chunk["content"]
                 chunks[-1]["embedding_text"] = _build_embedding_text(
                     chunks[-1]["parent_heading"],
@@ -80,7 +83,9 @@ def semantic_chunk_blocks(
             chunk_index += 1
             continue
 
-        sub_texts = _split_text_recursive(content, chunk_size, RAGConstant.DEFAULT_CHUNK_OVERLAP)
+        sub_texts = _split_text_recursive(
+            content, chunk_size, RAGConstant.DEFAULT_CHUNK_OVERLAP
+        )
 
         for sub_text in sub_texts:
             sub_text = sub_text.strip()
@@ -92,7 +97,10 @@ def semantic_chunk_blocks(
             if pending_chunk:
                 if pending_chunk["heading"] == meta.get("heading", ""):
                     pending_chunk["content"] += "\n\n" + sub_text
-                    if _count_tokens(pending_chunk["content"]) >= RAGConstant.MIN_CHUNK_SIZE:
+                    if (
+                        _count_tokens(pending_chunk["content"])
+                        >= RAGConstant.MIN_CHUNK_SIZE
+                    ):
                         _flush_pending()
                     continue
                 else:
@@ -171,6 +179,7 @@ def _get_tokenizer():
     global _tokenizer
     if _tokenizer is None:
         import tiktoken
+
         _tokenizer = tiktoken.get_encoding("cl100k_base")
     return _tokenizer
 
