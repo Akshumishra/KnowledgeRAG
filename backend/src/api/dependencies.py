@@ -1,15 +1,15 @@
 from fastapi import Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy import select
+
 from src.core.exceptions import UnauthorizedError
 from src.core.security import decode_token
-from src.database.uow import UnitOfWork
 from src.database.repositories.auth import UserRepository
-from src.models.auth import User
+from src.database.uow import UnitOfWork
+from src.models.auth import User, WorkspaceMember
+from src.providers.llm.factory import get_provider
 from src.providers.storage.base import BaseStorageProvider
 from src.providers.storage.local import LocalStorageProvider
-from src.providers.llm.factory import get_provider
-from src.models.auth import WorkspaceMember
-from sqlalchemy import select
 
 security = HTTPBearer()
 
@@ -67,5 +67,5 @@ async def get_current_user(
                 user.is_owner = False
 
             return user
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         raise UnauthorizedError(str(e))

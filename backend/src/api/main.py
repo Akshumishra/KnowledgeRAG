@@ -1,37 +1,40 @@
 from __future__ import annotations
 
+import asyncio
 import logging
+import sys
 from contextlib import asynccontextmanager
 from pathlib import Path
-import sys
-import asyncio
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 if sys.platform == "win32":
     asyncio.set_event_loop_policy(asyncio.WindowsSelectorEventLoopPolicy())
 
+from datetime import UTC, datetime, timedelta
+
 from fastapi import FastAPI, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
-from src.database.session import engine
-from src.models.base import Base
-from src.core.config import settings
-from src.core.logging import setup_logging
 from sqlalchemy import select, text, update
-from src.models.settings import LLMProvider
-from src.core.constants import DefaultLLMProviders
-from datetime import datetime, timedelta, timezone
-from src.models.chat import Message
+
 from src.api.routers import (
+    analytics,
     auth,
-    documents,
-    conversations,
     chat,
+    conversations,
+    documents,
     providers,
     users,
-    analytics,
 )
+from src.core.config import settings
+from src.core.constants import DefaultLLMProviders
+from src.core.logging import setup_logging
+from src.database.session import engine
+from src.models.base import Base
+from src.models.chat import Message
+from src.models.settings import LLMProvider
 
 setup_logging()
 logger = logging.getLogger(__name__)
@@ -58,7 +61,7 @@ async def lifespan(app: FastAPI):
                 await session.commit()
             logger.info("Seeded default LLM providers.")
 
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=5)
+        cutoff = datetime.now(UTC) - timedelta(minutes=5)
         stmt = (
             update(Message)
             .where(
@@ -68,7 +71,7 @@ async def lifespan(app: FastAPI):
             .values(
                 status="failed",
                 error_message="Generation timed out or server restarted",
-                completed_at=datetime.now(timezone.utc),
+                completed_at=datetime.now(UTC),
             )
         )
         await conn.execute(stmt)
@@ -131,7 +134,7 @@ async def serve_spa(full_path: str = ""):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
-    logger.error("Unhandled exception: %s", exc, exc_info=True)
+    logger.error("Unhandled exception: %s", exc)
     return JSONResponse(
         status_code=500,
         content={"detail": "An internal server error occurred"},
