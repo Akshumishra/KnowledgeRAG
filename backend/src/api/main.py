@@ -45,7 +45,6 @@ async def lifespan(app: FastAPI):
     logger.info("Upload directory ready: %s", settings.upload_dir)
 
     async with engine.begin() as conn:
-        # pgvector extension is PostgreSQL-only — skip on SQLite (used in tests)
         if not settings.database_url.startswith("sqlite"):
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
         await conn.run_sync(Base.metadata.create_all)

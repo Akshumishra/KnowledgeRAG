@@ -8,8 +8,6 @@ from src.core.config import settings
 
 _is_sqlite = settings.database_url.startswith("sqlite")
 
-# SQLite does not support connection pool settings (pool_size, max_overflow).
-# These are only passed when using PostgreSQL (production / staging).
 _pool_kwargs = (
     {}
     if _is_sqlite
@@ -19,7 +17,7 @@ _pool_kwargs = (
 engine = create_async_engine(
     settings.database_url,
     echo=settings.app_env == "development",
-    pool_pre_ping=not _is_sqlite,  # pool_pre_ping is also unsupported on SQLite
+    pool_pre_ping=not _is_sqlite,
     **_pool_kwargs,
 )
 
