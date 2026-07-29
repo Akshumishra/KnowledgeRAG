@@ -6,6 +6,7 @@ from src.schemas.provider import (
     APIKeyCreate,
     ProviderToggleRequest,
     ProviderCreate,
+    SaveModelsRequest,
 )
 from src.services.provider_service import ProviderService
 from src.api.dependencies import get_service, get_current_user
@@ -124,9 +125,6 @@ async def list_provider_models(
         return {"models": [], "error": str(e)}
 
 
-class SaveModelsRequest(BaseModel):
-    models: List[str]
-
 
 @router.post("/{provider_id}/models")
 async def save_provider_models(
@@ -137,6 +135,6 @@ async def save_provider_models(
 ):
     """Owner-only: Save the allowed model list for a provider in this workspace."""
     await service.save_workspace_models(
-        current_user.workspace_id, provider_id, data.models, current_user
+        current_user.workspace_id, provider_id, data.models, data.api_key_id, current_user
     )
     return {"status": "saved", "provider_id": provider_id, "models": data.models}

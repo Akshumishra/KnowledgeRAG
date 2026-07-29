@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
@@ -15,6 +15,7 @@ class ProviderCreate(BaseModel):
 class APIKeyCreate(BaseModel):
     provider_id: str
     api_key: str = Field(..., min_length=1)
+    display_name: Optional[str] = None
 
 
 class ProviderResponse(BaseModel):
@@ -22,6 +23,11 @@ class ProviderResponse(BaseModel):
     name: str
     slug: str
     default_models: Optional[str] = None
+
+
+class SaveModelsRequest(BaseModel):
+    models: List[str]
+    api_key_id: str
 
 
 class ProviderToggleRequest(BaseModel):

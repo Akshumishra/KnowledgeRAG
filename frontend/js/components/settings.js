@@ -128,18 +128,20 @@ async function loadProviders() {
     for (const key of keys) {
       const pInfo = _dbProviders.find(p => p.slug === key.provider_id) || { name: key.provider_id, icon: '' };
       const modelList = _workspaceModels[key.provider_id] || [];
-      const modelPills = modelList.length
-        ? modelList.map(m => `<span style="background:var(--c-surface2);border:1px solid var(--c-border);border-radius:12px;padding:2px 10px;font-size:11px;margin:2px;display:inline-block;">${m}</span>`).join('')
+      const keyModels = modelList.filter(m => m.api_key_id === key.id);
+      
+      const modelPills = keyModels.length
+        ? keyModels.map(m => `<span style="background:var(--c-surface2);border:1px solid var(--c-border);border-radius:12px;padding:2px 10px;font-size:11px;margin:2px;display:inline-block;">${m.name}</span>`).join('')
         : `<span style="color:var(--c-text-3);font-size:12px;font-style:italic;">No models — click "Edit Models"</span>`;
 
       html += `
         <tr style="opacity:${key.is_enabled ? '1' : '0.5'};border-bottom:1px solid var(--c-border);">
-          <td style="font-weight:600;padding:12px;">${pInfo.icon || ''} ${pInfo.name} ${!key.is_enabled ? '<span style="font-size:11px;color:var(--c-danger);">(Disabled)</span>' : ''}</td>
+          <td style="font-weight:600;padding:12px;">${pInfo.icon || ''} ${pInfo.name} ${key.display_name ? `<span style="font-weight:normal;color:var(--c-text-2)"> - ${key.display_name}</span>` : ''} ${!key.is_enabled ? '<span style="font-size:11px;color:var(--c-danger);">(Disabled)</span>' : ''}</td>
           <td style="font-family:monospace;color:var(--c-text-2);padding:12px;">${key.key_preview || '••••••••••••••••'}</td>
           <td style="padding:12px;max-width:280px;">${modelPills}</td>
           <td style="padding:12px;">
             <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <button class="btn btn-secondary btn-sm" onclick="showEditModels('${key.provider_id}', '${pInfo.name}')">Edit Models</button>
+              <button class="btn btn-secondary btn-sm" onclick="showEditModels('${key.provider_id}', '${pInfo.name}', '${key.id}')">Edit Models</button>
               <button class="btn ${key.is_enabled ? 'btn-secondary' : 'btn-primary'} btn-sm" onclick="toggleProviderStatus('${key.provider_id}', 'workspace', ${!key.is_enabled})">
                 ${key.is_enabled ? 'Disable' : 'Enable'}
               </button>
@@ -175,6 +177,10 @@ window.showAddProvider = (id, name, defaultModels) => {
         <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">x</button>
       </div>
       <div class="modal-body">
+        <div class="form-group" style="margin-bottom:16px;">
+          <label class="form-label">Display Name <span style="color:var(--c-text-3);font-weight:400;">(Optional)</span></label>
+          <input type="text" id="np-display-name" class="form-control" placeholder="e.g. Marketing Team Key" />
+        </div>
         <div class="form-group">
           <label class="form-label">${keyLabel}</label>
           <input type="${keyType}" id="np-key" class="form-control" placeholder="${keyPlaceholder}" autocomplete="new-password" />
@@ -196,6 +202,7 @@ window.showAddProvider = (id, name, defaultModels) => {
   overlay.querySelector('#np-submit').addEventListener('click', async () => {
     const btn = overlay.querySelector('#np-submit');
     const key = overlay.querySelector('#np-key').value.trim();
+    const displayName = overlay.querySelector('#np-display-name').value.trim();
     const modelsRaw = overlay.querySelector('#np-models').value.trim();
     const modelList = modelsRaw.split(',').map(m => m.trim()).filter(Boolean);
     
@@ -210,8 +217,8 @@ window.showAddProvider = (id, name, defaultModels) => {
 
     btn.disabled = true; btn.textContent = 'Saving...';
     try {
-      await providers.saveKey({ provider_id: id, api_key: key }, 'workspace');
-      await providers.saveProviderModels(id, modelList);
+      const savedKey = await providers.saveKey({ provider_id: id, api_key: key, display_name: displayName || null }, 'workspace');
+      await providers.saveProviderModels(id, modelList, savedKey.id);
       notify(`${name} configured successfully`, 'success');
       overlay.remove();
       loadProviders();
@@ -222,8 +229,10 @@ window.showAddProvider = (id, name, defaultModels) => {
   });
 };
 
-window.showEditModels = (providerId, providerName) => {
-  const currentModels = (_workspaceModels[providerId] || []).join(', ');
+window.showEditModels = (providerId, providerName, apiKeyId) => {
+  const modelList = _workspaceModels[providerId] || [];
+  const keyModels = modelList.filter(m => m.api_key_id === apiKeyId);
+  const currentModels = keyModels.map(m => m.name).join(', ');
   const overlay = document.createElement('div');
   overlay.className = 'modal-overlay';
   overlay.innerHTML = `
@@ -253,7 +262,7 @@ window.showEditModels = (providerId, providerName) => {
     const modelsRaw = overlay.querySelector('#edit-models-input').value.trim();
     const modelList = modelsRaw.split(',').map(m => m.trim()).filter(Boolean);
     try {
-      await providers.saveProviderModels(providerId, modelList);
+      await providers.saveProviderModels(providerId, modelList, apiKeyId);
       notify('Models updated', 'success');
       overlay.remove();
       loadProviders();

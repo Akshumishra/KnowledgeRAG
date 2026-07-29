@@ -27,7 +27,10 @@ class WorkspaceAPIKey(BaseModel):
     workspace_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )
-    provider_id: Mapped[str] = mapped_column(String(50))
+    provider_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("llm_providers.id", ondelete="CASCADE"), index=True
+    )
+    display_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
     encrypted_key: Mapped[str] = mapped_column(String(1024))
     key_preview: Mapped[str] = mapped_column(String(20))
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -40,6 +43,11 @@ class WorkspaceModel(BaseModel):
     workspace_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("workspaces.id", ondelete="CASCADE"), index=True
     )
-    provider_id: Mapped[str] = mapped_column(String(50))
+    provider_id: Mapped[str] = mapped_column(
+        String(36), ForeignKey("llm_providers.id", ondelete="CASCADE"), index=True
+    )
+    api_key_id: Mapped[Optional[str]] = mapped_column(
+        String(36), ForeignKey("organization_api_keys.id", ondelete="SET NULL"), nullable=True, index=True
+    )
     model_name: Mapped[str] = mapped_column(String(100))
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)

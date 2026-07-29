@@ -125,7 +125,7 @@ export const providers = {
   listModels: (provider, baseUrl) => _fetch(`/api/v1/providers/${provider}/models${baseUrl ? `?base_url=${baseUrl}` : ''}`),
   healthCheck: (provider) => _fetch(`/api/v1/providers/${provider}/health`),
   getWorkspaceModels: () => _fetch('/api/v1/providers/workspace-models'),
-  saveProviderModels: (providerId, models) => _fetch(`/api/v1/providers/${providerId}/models`, { method: 'POST', body: JSON.stringify({ models }) }),
+  saveProviderModels: (providerId, models, apiKeyId) => _fetch(`/api/v1/providers/${providerId}/models`, { method: 'POST', body: JSON.stringify({ models, api_key_id: apiKeyId }) }),
 };
 
 export const users = {

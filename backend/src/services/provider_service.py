@@ -10,7 +10,7 @@ from src.database.repositories.settings import (
 )
 from src.models.workspace import WorkspaceAPIKey, WorkspaceModel
 from src.schemas.provider import APIKeyCreate, ProviderResponse
-from sqlalchemy import select
+from sqlalchemy import select, delete
 from src.models.settings import ModelCapability
 from src.models.settings import LLMProvider
 from src.models.auth import workspace_member_table
@@ -95,6 +95,7 @@ class ProviderService:
                     {
                         "id": k.id,
                         "provider_id": k.provider_id,
+                        "display_name": k.display_name,
                         "key_preview": k.key_preview,
                         "full_key": None,
                         "is_enabled": k.is_enabled,
@@ -134,6 +135,7 @@ class ProviderService:
                     WorkspaceAPIKey(
                         workspace_id=workspace_id,
                         provider_id=data.provider_id,
+                        display_name=data.display_name,
                         encrypted_key=encrypted_val,
                         key_preview=preview,
                         is_valid=True,
@@ -145,6 +147,7 @@ class ProviderService:
             return {
                 "id": key_obj.id,
                 "provider_id": key_obj.provider_id,
+                "display_name": getattr(key_obj, "display_name", None),
                 "key_preview": key_obj.key_preview,
                 "full_key": None,
                 "is_enabled": getattr(key_obj, "is_enabled", True),
@@ -186,8 +189,23 @@ class ProviderService:
             key.is_enabled = is_enabled
             await self.uow.commit()
 
-    async def _resolve_key(self, provider_id: str, workspace_id: str, actor: "User"):
-        """Resolves the key for Org scope."""
+    async def _resolve_key(self, provider_id: str, workspace_id: str, actor: "User", model_name: str = None):
+        """Resolves the key for Org scope. Uses model-specific key if set."""
+        if model_name:
+            stmt = select(WorkspaceModel.api_key_id).where(
+                WorkspaceModel.workspace_id == workspace_id,
+                WorkspaceModel.provider_id == provider_id,
+                WorkspaceModel.model_name == model_name,
+                WorkspaceModel.is_enabled == True
+            )
+            result = await self.uow.session.execute(stmt)
+            api_key_id = result.scalar()
+            if api_key_id:
+                org_repo = WorkspaceAPIKeyRepository(self.uow.session)
+                org_key = await org_repo.get(api_key_id)
+                if org_key and getattr(org_key, "is_enabled", True):
+                    return org_key
+
         org_repo = WorkspaceAPIKeyRepository(self.uow.session)
         org_key = await org_repo.get_by_org_and_provider(workspace_id, provider_id)
         if org_key and getattr(org_key, "is_enabled", True):
@@ -236,37 +254,47 @@ class ProviderService:
             await self.uow.commit()
             return models
 
-    async def get_workspace_models(self, workspace_id: str) -> Dict[str, List[str]]:
-        """Return a dict of {provider_id: [model_name, ...]} for a workspace."""
+    async def get_workspace_models(self, workspace_id: str) -> Dict[str, List[Dict[str, str]]]:
+        """Return a dict of {provider_id: [{"name": model_name, "api_key_id": api_key_id}, ...]} for a workspace."""
         async with self.uow:
             repo = WorkspaceModelRepository(self.uow.session)
             all_models = await repo.get_all_for_workspace(workspace_id)
-            result: Dict[str, List[str]] = {}
+            result: Dict[str, List[Dict[str, str]]] = {}
             for m in all_models:
-                result.setdefault(m.provider_id, []).append(m.model_name)
+                result.setdefault(m.provider_id, []).append(
+                    {"name": m.model_name, "api_key_id": m.api_key_id}
+                )
             return result
 
     async def save_workspace_models(
         self,
         workspace_id: str,
         provider_id: str,
-        model_names: List[str],
+        models: List[str],
+        api_key_id: str,
         actor: "User",
     ) -> None:
-        """Replace the model list for a provider in a workspace. Owner-only."""
+        """Replace the model list for a specific API key in a workspace. Owner-only."""
         if not await self._is_workspace_owner(actor.id, workspace_id):
             raise ForbiddenError()
 
         async with self.uow:
-            repo = WorkspaceModelRepository(self.uow.session)
-            await repo.delete_for_provider(workspace_id, provider_id)
-            for name in model_names:
+            # Delete only models for this specific api_key_id
+            stmt = delete(WorkspaceModel).where(
+                WorkspaceModel.workspace_id == workspace_id,
+                WorkspaceModel.provider_id == provider_id,
+                WorkspaceModel.api_key_id == api_key_id
+            )
+            await self.uow.session.execute(stmt)
+            
+            for name in models:
                 name = name.strip()
                 if name:
                     self.uow.session.add(
                         WorkspaceModel(
                             workspace_id=workspace_id,
                             provider_id=provider_id,
+                            api_key_id=api_key_id,
                             model_name=name,
                             is_enabled=True,
                         )

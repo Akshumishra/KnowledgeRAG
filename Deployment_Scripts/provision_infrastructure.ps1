@@ -3,9 +3,8 @@ param (
 )
 $ErrorActionPreference = 'Stop'
 
-Write-Host '==========================================' -ForegroundColor Cyan
-Write-Host '  Automated Azure Deployment - KnowledgeAI' -ForegroundColor Cyan
-Write-Host '==========================================' -ForegroundColor Cyan
+Write-Host 'Azure Deployment - KnowledgeAI' -ForegroundColor Cyan
+Write-Host '==============================' -ForegroundColor Cyan
 
 $azAccount = az account show --query name -o tsv 2>$null
 if (-not $azAccount) {
@@ -19,7 +18,6 @@ if ($Subscription) {
     az account set --subscription $Subscription
 }
 
-Write-Host ""
 Write-Host "Please provide the required configuration for the deployment:" -ForegroundColor Yellow
 $OpenAIKey = Read-Host "Enter your OpenAI API Key"
 $ImageOpenApiKey = Read-Host "Enter your Image OpenAI API Key (press Enter to use the same as OpenAI Key)"
@@ -28,10 +26,9 @@ if ([string]::IsNullOrWhiteSpace($ImageOpenApiKey)) {
 }
 $ImageProcessingModel = Read-Host "Enter the Image Processing Model (press Enter for 'gpt-4o-mini')"
 if ([string]::IsNullOrWhiteSpace($ImageProcessingModel)) {
-    $ImageProcessingModel = "gpt-4o-mini"
+    $ImageProcessingModel = "gpt-5-mini"
 }
 
-Write-Host ""
 Write-Host "Please provide SMTP configuration for emails:" -ForegroundColor Yellow
 $SmtpHost = Read-Host "Enter SMTP Host (press Enter for 'smtp-relay.brevo.com')"
 if ([string]::IsNullOrWhiteSpace($SmtpHost)) { $SmtpHost = "smtp-relay.brevo.com" }

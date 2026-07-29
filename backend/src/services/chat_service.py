@@ -149,7 +149,7 @@ class ChatService:
             if not api_key:
                 provider_service = ProviderService(self.uow)
                 api_key_record = await provider_service._resolve_key(
-                    provider_id, workspace_id, actor
+                    provider_id, workspace_id, actor, model_name=model_name
                 )
                 if not api_key_record or not api_key_record.is_valid:
                     raise BadRequestError(

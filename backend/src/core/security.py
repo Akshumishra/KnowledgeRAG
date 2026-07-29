@@ -1,10 +1,10 @@
 from __future__ import annotations
+import bcrypt
 
 from datetime import datetime, timedelta, timezone
 from typing import Any, Optional
 from cryptography.fernet import Fernet
 from jose import JWTError, jwt
-import bcrypt
 from src.core.config import settings
 
 
