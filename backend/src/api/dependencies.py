@@ -67,5 +67,5 @@ async def get_current_user(
                 user.is_owner = False
 
             return user
-    except Exception as e:  # noqa: BLE001
+    except Exception as e:
         raise UnauthorizedError(str(e))
