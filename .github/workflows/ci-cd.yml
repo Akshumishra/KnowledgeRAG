@@ -47,6 +47,14 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    # Set env vars at job level so they are available BEFORE Python imports
+    # the app module. Settings uses @lru_cache, so DATABASE_URL must be in
+    # the environment at import time — a step-level env override is too late.
+    env:
+      APP_ENV:        testing
+      DATABASE_URL:   ${{ secrets.TEST_DATABASE_URL }}
+      SECRET_KEY:     ${{ secrets.TEST_SECRET_KEY }}
+      ENCRYPTION_KEY: ${{ secrets.TEST_ENCRYPTION_KEY }}
 
     steps:
       - name: Checkout code
@@ -82,27 +90,20 @@ jobs:
       # Sensitive values come from GitHub Secrets; app is run in testing mode
       # which uses an in-memory SQLite DB — no real database needed.
       - name: Run tests with Pytest
-        env:
-          APP_ENV:        testing
-          DATABASE_URL:   ${{ secrets.TEST_DATABASE_URL }}
-          SECRET_KEY:     ${{ secrets.TEST_SECRET_KEY }}
-          ENCRYPTION_KEY: ${{ secrets.TEST_ENCRYPTION_KEY }}
         run: |
-          cd backend
-          python -m pytest tests/ \
-            --cov=src \
+          python -m pytest backend/tests/ \
+            --cov=backend/src \
             --cov-report=xml:coverage.xml \
             --cov-report=term-missing \
             --tb=short \
             -v
 
-      # ── Upload coverage so it is visible in PR summaries ───────────────────
       - name: Upload coverage report
         uses: actions/upload-artifact@v4
         if: always()
         with:
           name: coverage-report
-          path: backend/coverage.xml
+          path: coverage.xml
           retention-days: 7
 
 # ─────────────────────────────────────────────────────────────────────────────
