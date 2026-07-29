@@ -48,7 +48,6 @@ dependencies = [
     "psycopg[binary]>=3.3.4",
     "pgvector>=0.4.2",
     "huggingface-hub>=1.21.0",
-    # Required for in-memory SQLite in tests (engine created eagerly at import time)
     "aiosqlite>=0.20.0",
 ]
 

@@ -1,7 +1,3 @@
-/**
- * Enterprise AI Knowledge Platform — Main SPA Application
- * Client-side router and global state management.
- */
 import * as API from './api.js';
 import { renderAuth } from './components/auth.js';
 import { renderSidebar, updateConversationList } from './components/sidebar.js';
@@ -12,7 +8,6 @@ import { renderSettings } from './components/settings.js';
 import { renderAdmin } from './components/admin.js';
 import { renderDashboard } from './components/dashboard.js';
 
-// ── Global State ──────────────────────────────────────────────────────
 export const state = {
   user: null,
   currentRoute: 'chat',
@@ -23,21 +18,13 @@ export const state = {
   contextTokens: 0,
   maxContextTokens: 128000,
 };
-// ── Permission helpers (single source of truth) ─────────────────────────────
-/**
- * Returns true if the current user is a workspace owner.
- * Always read from state.user which is set by /api/v1/auth/me.
- */
+
 export function isOwner() {
   return state.user?.is_owner === true || state.user?.role === 'owner';
 }
 
-/**
- * Returns true if the current user has the given permission string.
- * e.g. hasPermission('manage_org')
- */
 export function hasPermission(perm) {
-  if (isOwner()) return true; // owners have all permissions
+  if (isOwner()) return true;
   return Array.isArray(state.user?.permissions) && state.user.permissions.includes(perm);
 }
 
@@ -46,7 +33,6 @@ export function parseApiError(e) {
   if (!e) return 'An unexpected error occurred.';
   const msg = e?.message || String(e);
   
-  // Exact matches or specific known prefixes
   if (msg === '401' || msg.includes('401 Unauthorized') || msg === 'Invalid or expired OTP') return 'You are not authorised to do this. Please log in again.';
   if (msg === '403' || msg === 'Insufficient permissions') return 'You do not have permission to do this.';
   if (msg === '404' || msg.includes('not found')) return 'The requested resource was not found.';
@@ -70,7 +56,6 @@ export function parseApiError(e) {
   return msg;
 }
 
-// ── Notification system ───────────────────────────────────────────
 export function notify(message, type = 'info', duration) {
   const container = document.getElementById('notifications') || (() => {
     const el = document.createElement('div');
@@ -113,7 +98,6 @@ export function notify(message, type = 'info', duration) {
   el.addEventListener('mouseleave', () => setTimeout(dismiss, 1500));
 }
 
-// ── Router ────────────────────────────────────────────────────────────
 export function navigate(route, params = {}) {
   if (route === 'settings' && !isOwner()) {
     notify('You do not have permission to view this page.', 'warning');
@@ -132,7 +116,6 @@ export function navigate(route, params = {}) {
     localStorage.removeItem('last_conversation_id');
   }
 
-  // Update server in background
   if (state.user) {
     API.users.updateActivity({ last_route: route, last_conversation_id: convIdToSave }).catch(e => {
         console.warn('Failed to sync user activity to server', e);
@@ -160,7 +143,6 @@ function renderMainContent(route) {
   }
 }
 
-// ── Bootstrap ─────────────────────────────────────────────────────────
 async function boot() {
   if (!API.hasToken()) {
     renderAuth(() => afterLogin());
@@ -250,7 +232,6 @@ function buildLayout() {
 
   renderSidebar(document.getElementById('sidebar'));
 
-  // Sidebar toggle
   let sidebarOpen = true;
   document.getElementById('sidebar-toggle-btn')?.addEventListener('click', () => {
     sidebarOpen = !sidebarOpen;
@@ -265,10 +246,6 @@ function buildLayout() {
     }
   });
 
-
-
-
-  // User dropdown
   document.getElementById('user-avatar-btn')?.addEventListener('click', (e) => {
     e.stopPropagation();
     toggleUserDropdown();
@@ -278,7 +255,6 @@ function buildLayout() {
     document.getElementById('user-dropdown')?.classList.add('hidden');
   });
 
-  // Initial document load via DocumentStore (uses cache, no polling unless pending docs exist)
   DocumentStore.load();
 }
 
@@ -434,17 +410,14 @@ export const DocumentStore = (() => {
   }
 
   return {
-    /** Load documents, using cache if still valid (no extra requests for idle users). */
     load() { return _fetch(false); },
 
-    /** Force a fresh fetch, e.g. after upload/delete/rename. */
     refresh() {
       console.debug('[DocumentStore] Forced refresh requested.');
       _lastFetch = null;
       return _fetch(true);
     },
 
-    /** Invalidate the cache (next load() will re-fetch). */
     invalidate() { _lastFetch = null; },
 
     get documents() { return _documents; },

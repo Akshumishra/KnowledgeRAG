@@ -1,7 +1,3 @@
-/**
- * API client — all fetch calls, SSE streaming, token refresh logic.
- */
-
 const BASE = '';
 let _accessToken = localStorage.getItem('access_token') || '';
 let _refreshToken = localStorage.getItem('refresh_token') || '';
@@ -53,7 +49,6 @@ async function _fetch(url, options = {}, retried = false) {
   return res.json();
 }
 
-// ── Auth ─────────────────────────────────────────────────────────────
 export const auth = {
   register: (data) => _fetch('/api/v1/auth/register', { method: 'POST', body: JSON.stringify(data) }),
   verifyEmail: (data) => _fetch('/api/v1/auth/verify-email', { method: 'POST', body: JSON.stringify(data) }),
@@ -67,7 +62,6 @@ export const auth = {
   resetPassword: (data) => _fetch('/api/v1/auth/reset-password', { method: 'POST', body: JSON.stringify(data) }),
 };
 
-// ── Workspaces ────────────────────────────────────────────────────────
 export const workspaces = {
   list: () => _fetch('/api/v1/auth/workspaces'),
   create: (data) => _fetch('/api/v1/auth/workspaces', { method: 'POST', body: JSON.stringify(data) }),
@@ -76,8 +70,6 @@ export const workspaces = {
   delete: (id) => _fetch(`/api/v1/auth/workspaces/${id}`, { method: 'DELETE' }),
 };
 
-
-// ── Documents ────────────────────────────────────────────────────────
 export const documents = {
   list: () => _fetch(`/api/v1/documents/`),
   get: (id) => _fetch(`/api/v1/documents/${id}`),
@@ -112,8 +104,6 @@ export const conversations = {
   getMessageStatus: (convId, msgId) => _fetch(`/api/v1/chat/${convId}/messages/${msgId}/status`),
 };
 
-
-// ── Providers ─────────────────────────────────────────────────────────
 export const providers = {
   list: () => _fetch('/api/v1/providers'),
   create: (data) => _fetch('/api/v1/providers', { method: 'POST', body: JSON.stringify(data) }),
@@ -142,12 +132,10 @@ export const analytics = {
   getDashboard: () => _fetch('/api/v1/analytics/dashboard'),
 };
 
-// ── Audit ─────────────────────────────────────────────────────────────
 export const audit = {
   getLogs: (limit = 50, offset = 0) => _fetch(`/api/v1/audit/?limit=${limit}&offset=${offset}`),
 };
 
-// ── Streaming Base ────────────────────────────────────────────────────
 function _streamBase(url, options, callbacks) {
   const { onToken, onSources, onStats, onDone, onError, onThinking } = callbacks;
   const controller = new AbortController();
