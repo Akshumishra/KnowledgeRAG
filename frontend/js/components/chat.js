@@ -3,10 +3,10 @@ import { streamChat, reconnectStream, conversations, providers } from '../api.js
 
 function md(text) {
   if (!text) return '';
-  
+
   if (typeof marked !== 'undefined') {
     let html = marked.parse(text, { gfm: true, breaks: true });
-    
+
     html = html.replace(/<pre><code class="(.*?)">([\s\S]*?)<\/code><\/pre>/g, (match, cls, code) => {
       const lang = cls.replace('language-', '');
       return `<pre><button class="code-copy-btn" onclick="copyCode(this)">Copy</button><code class="${lang}">${code}</code></pre>`;
@@ -14,12 +14,12 @@ function md(text) {
     html = html.replace(/<pre><code>([\s\S]*?)<\/code><\/pre>/g, (match, code) => {
       return `<pre><button class="code-copy-btn" onclick="copyCode(this)">Copy</button><code>${code}</code></pre>`;
     });
-    
+
     return `<div class="md-content">${html}</div>`;
   }
 
   let html = text
-    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/```(\w*)\n?([\s\S]*?)```/g, (_, lang, code) =>
       `<pre><button class="code-copy-btn" onclick="copyCode(this)">Copy</button><code class="${lang}">${code.trim()}</code></pre>`)
     .replace(/`([^`]+)`/g, '<code>$1</code>')
@@ -37,7 +37,7 @@ function md(text) {
   return `<div class="md-content"><p>${html}</p></div>`;
 }
 
-window.copyCode = function(btn) {
+window.copyCode = function (btn) {
   const code = btn.nextSibling?.textContent || '';
   navigator.clipboard.writeText(code).then(() => {
     btn.textContent = 'Copied!';
@@ -46,7 +46,7 @@ window.copyCode = function(btn) {
 };
 
 function escHtml(str) {
-  return String(str).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  return String(str).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
 }
 
 let _messages = [];
@@ -58,11 +58,11 @@ function estimateTokens(text) {
 function tokenBadgeHtml(info) {
   if (!info) return '';
   const parts = [];
-  if (info.total != null)      parts.push(`<span class="token-badge" title="Total tokens">${info.total.toLocaleString()} tok</span>`);
-  if (info.prompt != null)     parts.push(`<span class="token-badge dim" title="Prompt tokens">↑${info.prompt.toLocaleString()}</span>`);
+  if (info.total != null) parts.push(`<span class="token-badge" title="Total tokens">${info.total.toLocaleString()} tok</span>`);
+  if (info.prompt != null) parts.push(`<span class="token-badge dim" title="Prompt tokens">↑${info.prompt.toLocaleString()}</span>`);
   if (info.completion != null) parts.push(`<span class="token-badge dim" title="Completion tokens">↓${info.completion.toLocaleString()}</span>`);
-  if (info.estimated)          parts.push(`<span class="token-badge dim" title="Estimated (client-side)">~est</span>`);
-  if (info.model != null)      parts.push(`<span class="token-badge" title="Model">${info.model}</span>`);
+  if (info.estimated) parts.push(`<span class="token-badge dim" title="Estimated (client-side)">~est</span>`);
+  if (info.model != null) parts.push(`<span class="token-badge" title="Model">${info.model}</span>`);
   if (info.latency_ms != null) parts.push(`<span class="token-badge" title="Latency">${info.latency_ms.toFixed(0)} ms</span>`);
   return parts.join('');
 }
@@ -135,7 +135,10 @@ export function renderChat(container) {
     if (models.length === 0) {
       modelSelect.innerHTML = '<option value="">No models configured</option>';
     } else {
-      modelSelect.innerHTML = models.map(m => `<option value="${m}">${m}</option>`).join('');
+      modelSelect.innerHTML = models.map(m => {
+        const name = m.name || m.model_name || m;
+        return `<option value="${name}">${name}</option>`;
+      }).join('');
     }
   };
 
@@ -203,7 +206,7 @@ async function loadMessages(id) {
       container.innerHTML = renderEmptyState();
       return;
     }
-    
+
     container.innerHTML = '';
     let pendingMsgId = null;
 
@@ -234,7 +237,7 @@ async function loadMessages(id) {
       }
       appendMessage(msg.role, msg.content, false, msg.sources, tokenInfo);
     });
-    
+
     container.scrollTop = container.scrollHeight;
 
     if (pendingMsgId) {
@@ -276,17 +279,17 @@ function createStreamCallbacks(typingId) {
       if (assistantMsgEl && lastStats) {
         const meta = assistantMsgEl.querySelector('.message-meta');
         if (meta) {
-          const promptTok  = lastStats.prompt_tokens + (lastStats.context_tokens || 0);
-          const compTok    = lastStats.completion_tokens;
-          const totalTok   = lastStats.total_tokens;
+          const promptTok = lastStats.prompt_tokens + (lastStats.context_tokens || 0);
+          const compTok = lastStats.completion_tokens;
+          const totalTok = lastStats.total_tokens;
           meta.innerHTML = `
-            ${tokenBadgeHtml({ 
-              total: totalTok, 
-              prompt: promptTok, 
-              completion: compTok,
-              model: lastStats.model,
-              latency_ms: lastStats.latency_ms
-            })}
+            ${tokenBadgeHtml({
+            total: totalTok,
+            prompt: promptTok,
+            completion: compTok,
+            model: lastStats.model,
+            latency_ms: lastStats.latency_ms
+          })}
             <button class="message-action" onclick="navigator.clipboard.writeText(this.closest('.message').querySelector('.md-content')?.innerText||'')">Copy</button>
           `;
         }
@@ -321,7 +324,7 @@ function startMessagePolling(convId, msgId) {
   const typingId = `msg-${msgId}`;
   appendTyping(typingId);
   updateStreamingState(true);
-  
+
   const callbacks = createStreamCallbacks(typingId);
   state.streamCancel = reconnectStream(convId, msgId, callbacks);
 }
@@ -354,10 +357,10 @@ async function sendMessage() {
       });
       state.currentConversation = conv;
       state.conversations.unshift(conv);
-      
+
       localStorage.setItem('last_conversation_id', conv.id);
       if (state.user) {
-        API.users.updateActivity({ last_route: 'chat', last_conversation_id: conv.id }).catch(() => {});
+        API.users.updateActivity({ last_route: 'chat', last_conversation_id: conv.id }).catch(() => { });
       }
 
       const sidebar = document.getElementById('sidebar');
@@ -369,7 +372,7 @@ async function sendMessage() {
   const selModel = document.getElementById('model-select')?.value || 'gpt-4o';
 
   const callbacks = createStreamCallbacks(typingId);
-  
+
   const cancel = streamChat(
     {
       conversation_id: state.currentConversation?.id,
@@ -404,7 +407,7 @@ function appendMessage(role, content, live = false, sources = null, tokenInfo = 
         ${imgHtml}
       </div>`;
     }).join('');
-    
+
     sourcesHtml = `
       <details class="message-sources-dropdown" style="margin-top:12px;">
         <summary style="cursor:pointer;font-size:12px;font-weight:600;color:var(--c-text-2);margin-bottom:8px;user-select:none;">
