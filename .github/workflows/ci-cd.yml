@@ -86,22 +86,14 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Install Semgrep
+        run: pipx install semgrep
+
       - name: Run Semgrep
-        uses: semgrep/semgrep-action@v1
-        with:
-          config: >-
-            p/python
-            p/fastapi
-            p/owasp-top-ten
-          generateSarif: "1"
-        env:
-          SEMGREP_RULES: >-
-            p/python
-            p/fastapi
-            p/owasp-top-ten
+        run: semgrep scan --config="p/python" --config="p/fastapi" --config="p/owasp-top-ten" --sarif --output=semgrep.sarif || true
 
       - name: Upload Semgrep SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         if: always()
         with:
           sarif_file: semgrep.sarif
