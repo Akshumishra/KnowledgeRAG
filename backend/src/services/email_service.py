@@ -1,8 +1,9 @@
-import smtplib
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
-from src.core.config import settings
 import logging
+import smtplib
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
+
+from src.core.config import settings
 
 logger = logging.getLogger(__name__)
 
@@ -44,7 +45,7 @@ class EmailService:
 
             logger.info(f"Successfully sent email to {to_email}")
             return True
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Failed to send email to {to_email}: {e}")
             logger.info(
                 f"[FALLBACK] Email content intended for {to_email}: {html_body}"

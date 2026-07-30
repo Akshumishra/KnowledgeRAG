@@ -1,7 +1,8 @@
 import logging
+
 from openai import AsyncOpenAI
+
 from src.core.config import settings
-from typing import List
 
 logger = logging.getLogger(__name__)
 
@@ -17,8 +18,8 @@ class OpenAIEmbedder:
         self.model = "text-embedding-3-small"
 
     async def encode(
-        self, texts: List[str], normalize_embeddings: bool = True
-    ) -> List[List[float]]:
+        self, texts: list[str], normalize_embeddings: bool = True
+    ) -> list[list[float]]:
         if not texts:
             return []
 

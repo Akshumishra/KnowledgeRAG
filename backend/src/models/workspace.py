@@ -1,6 +1,7 @@
-from typing import Optional
-from sqlalchemy import Boolean, DateTime, String, ForeignKey
+
+from sqlalchemy import Boolean, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
+
 from src.models.base import BaseModel
 
 
@@ -9,7 +10,7 @@ class Workspace(BaseModel):
 
     name: Mapped[str] = mapped_column(String(255))
     slug: Mapped[str] = mapped_column(String(255), unique=True, index=True)
-    join_code: Mapped[Optional[str]] = mapped_column(
+    join_code: Mapped[str | None] = mapped_column(
         String(20), unique=True, index=True, nullable=True
     )
 
@@ -30,7 +31,7 @@ class WorkspaceAPIKey(BaseModel):
     provider_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("llm_providers.id", ondelete="CASCADE"), index=True
     )
-    display_name: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
+    display_name: Mapped[str | None] = mapped_column(String(100), nullable=True)
     encrypted_key: Mapped[str] = mapped_column(String(1024))
     key_preview: Mapped[str] = mapped_column(String(20))
     is_enabled: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -46,7 +47,7 @@ class WorkspaceModel(BaseModel):
     provider_id: Mapped[str] = mapped_column(
         String(36), ForeignKey("llm_providers.id", ondelete="CASCADE"), index=True
     )
-    api_key_id: Mapped[Optional[str]] = mapped_column(
+    api_key_id: Mapped[str | None] = mapped_column(
         String(36), ForeignKey("organization_api_keys.id", ondelete="SET NULL"), nullable=True, index=True
     )
     model_name: Mapped[str] = mapped_column(String(100))

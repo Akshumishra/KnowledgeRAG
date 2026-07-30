@@ -1,5 +1,5 @@
 import abc
-from typing import AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
 
 
 class BaseLLMProvider(abc.ABC):
@@ -12,7 +12,6 @@ class BaseLLMProvider(abc.ABC):
         """
         Generate a complete response.
         """
-        pass
 
     @abc.abstractmethod
     async def stream(
@@ -21,7 +20,6 @@ class BaseLLMProvider(abc.ABC):
         """
         Generate a response incrementally.
         """
-        pass
 
     def count_tokens(self, text: str) -> int:
         """
@@ -30,18 +28,16 @@ class BaseLLMProvider(abc.ABC):
         return len(text) // 4
 
     @abc.abstractmethod
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         """
         List available models from this provider.
         """
-        pass
 
     @abc.abstractmethod
     def supports_streaming(self) -> bool:
         """
         Return True if the provider/model supports streaming.
         """
-        pass
 
     def maximum_context_window(self, model: str) -> int:
         """

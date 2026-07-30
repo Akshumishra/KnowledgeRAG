@@ -1,6 +1,6 @@
-from typing import Optional
-from datetime import datetime, timezone
-from sqlalchemy import Boolean, DateTime, String, ForeignKey
+from datetime import UTC, datetime
+
+from sqlalchemy import Boolean, DateTime, ForeignKey, String
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from src.models.base import BaseModel
@@ -31,7 +31,7 @@ class WorkspaceMember(BaseModel):
     is_owner: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)
     joined_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
-        default=lambda: datetime.now(timezone.utc),
+        default=lambda: datetime.now(UTC),
         nullable=False,
     )
 
@@ -47,11 +47,11 @@ class User(BaseModel):
     password_hash: Mapped[str] = mapped_column(String(255))
     is_active: Mapped[bool] = mapped_column(Boolean, default=True)
     is_verified: Mapped[bool] = mapped_column(Boolean, default=False)
-    otp_code: Mapped[Optional[str]] = mapped_column(String(6), nullable=True)
-    otp_expires_at: Mapped[Optional[datetime]] = mapped_column(
+    otp_code: Mapped[str | None] = mapped_column(String(6), nullable=True)
+    otp_expires_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    last_login: Mapped[Optional[datetime]] = mapped_column(
+    last_login: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
 
@@ -83,6 +83,6 @@ class UserActivity(BaseModel):
         String(36), ForeignKey("users.id", ondelete="CASCADE"), unique=True, index=True
     )
     last_route: Mapped[str] = mapped_column(String(50), default="chat")
-    last_conversation_id: Mapped[Optional[str]] = mapped_column(
+    last_conversation_id: Mapped[str | None] = mapped_column(
         String(36), nullable=True
     )

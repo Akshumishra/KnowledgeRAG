@@ -2,11 +2,12 @@
 Analytics service using UoW and Repositories.
 """
 
-from typing import Dict, Any
-from src.database.uow import UnitOfWork
-from src.database.repositories.chat import MessageRepository
-from src.models.auth import User
+from typing import Any
+
 from src.core.exceptions import ForbiddenError
+from src.database.repositories.chat import MessageRepository
+from src.database.uow import UnitOfWork
+from src.models.auth import User
 
 
 class AnalyticsService:
@@ -15,7 +16,7 @@ class AnalyticsService:
 
     async def get_dashboard_metrics(
         self, workspace_id: str, actor: User
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not getattr(actor, "is_owner", False):
             raise ForbiddenError()
 

@@ -1,34 +1,33 @@
 import random
 import string
-from datetime import datetime, timedelta, timezone
-from typing import Tuple, List
+from datetime import UTC, datetime, timedelta
+
 from sqlalchemy import select, update
 
 from src.core.config import settings
 from src.core.exceptions import (
-    UnauthorizedError,
     ConflictError,
-    NotFoundError,
     ForbiddenError,
+    NotFoundError,
+    UnauthorizedError,
 )
 from src.core.security import (
-    hash_password,
-    verify_password,
     create_access_token,
     create_refresh_token,
+    hash_password,
+    verify_password,
 )
-from src.database.uow import UnitOfWork
 from src.database.repositories.auth import UserRepository
 from src.database.repositories.workspace import WorkspaceRepository
-from src.models.auth import User, RefreshToken, WorkspaceMember
+from src.database.uow import UnitOfWork
+from src.models.auth import RefreshToken, User, WorkspaceMember
 from src.models.workspace import Workspace
-
 from src.schemas.auth import (
-    RegisterRequest,
-    LoginRequest,
-    TokenResponse,
     CreateWorkspaceRequest,
     JoinWorkspaceRequest,
+    LoginRequest,
+    RegisterRequest,
+    TokenResponse,
 )
 from src.schemas.auth import Workspace as SchemaWorkspace
 
@@ -65,7 +64,7 @@ class AuthService:
         self.uow = uow
         self.email_service = EmailService()
 
-    async def register(self, data: RegisterRequest) -> Tuple[User, None]:
+    async def register(self, data: RegisterRequest) -> tuple[User, None]:
         async with self.uow:
             user_repo = UserRepository(self.uow.session)
 
@@ -73,7 +72,7 @@ class AuthService:
                 raise ConflictError(f"Email '{data.email}' is already registered.")
 
             otp = _generate_otp()
-            expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+            expires_at = datetime.now(UTC) + timedelta(minutes=15)
 
             user = user_repo.add(
                 User(
@@ -99,7 +98,7 @@ class AuthService:
 
     async def verify_email_otp(
         self, email: str, otp: str
-    ) -> Tuple[User, TokenResponse]:
+    ) -> tuple[User, TokenResponse]:
         async with self.uow:
             user_repo = UserRepository(self.uow.session)
             user = await user_repo.get_by_email(email)
@@ -112,14 +111,14 @@ class AuthService:
             if (
                 user.otp_code != otp
                 or not user.otp_expires_at
-                or user.otp_expires_at < datetime.now(timezone.utc)
+                or user.otp_expires_at < datetime.now(UTC)
             ):
                 raise UnauthorizedError("Invalid or expired OTP")
 
             user.is_verified = True
             user.otp_code = None
             user.otp_expires_at = None
-            user.last_login = datetime.now(timezone.utc)
+            user.last_login = datetime.now(UTC)
 
             tokens = await self._generate_tokens(user, workspace_id=None)
             await self.uow.commit()
@@ -137,7 +136,7 @@ class AuthService:
 
             otp = _generate_otp()
             user.otp_code = otp
-            user.otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+            user.otp_expires_at = datetime.now(UTC) + timedelta(minutes=15)
             await self.uow.flush()
 
             self.email_service.send_email(
@@ -157,7 +156,7 @@ class AuthService:
 
             otp = _generate_otp()
             user.otp_code = otp
-            user.otp_expires_at = datetime.now(timezone.utc) + timedelta(minutes=15)
+            user.otp_expires_at = datetime.now(UTC) + timedelta(minutes=15)
             await self.uow.flush()
 
             self.email_service.send_email(
@@ -179,7 +178,7 @@ class AuthService:
             if (
                 user.otp_code != otp
                 or not user.otp_expires_at
-                or user.otp_expires_at < datetime.now(timezone.utc)
+                or user.otp_expires_at < datetime.now(UTC)
             ):
                 raise UnauthorizedError("Invalid or expired OTP")
 
@@ -188,7 +187,7 @@ class AuthService:
             user.otp_expires_at = None
             await self.uow.commit()
 
-    async def login(self, data: LoginRequest) -> Tuple[User, TokenResponse]:
+    async def login(self, data: LoginRequest) -> tuple[User, TokenResponse]:
         async with self.uow:
             user_repo = UserRepository(self.uow.session)
             user = await user_repo.get_by_email(data.email)
@@ -201,12 +200,12 @@ class AuthService:
                     "Email is not verified. Please verify your email first."
                 )
 
-            user.last_login = datetime.now(timezone.utc)
+            user.last_login = datetime.now(UTC)
             tokens = await self._generate_tokens(user, workspace_id=None)
             await self.uow.commit()
             return user, tokens
 
-    async def get_workspaces(self, user: User) -> List[Workspace]:
+    async def get_workspaces(self, user: User) -> list[Workspace]:
         async with self.uow:
             stmt = (
                 select(WorkspaceMember, Workspace)
@@ -237,7 +236,7 @@ class AuthService:
 
     async def create_workspace(
         self, data: CreateWorkspaceRequest, user: User
-    ) -> Tuple[Workspace, TokenResponse]:
+    ) -> tuple[Workspace, TokenResponse]:
         async with self.uow:
             org_repo = WorkspaceRepository(self.uow.session)
             slug = _slugify(data.workspace_name)
@@ -261,7 +260,7 @@ class AuthService:
 
     async def join_workspace(
         self, data: JoinWorkspaceRequest, user: User
-    ) -> Tuple[Workspace, TokenResponse]:
+    ) -> tuple[Workspace, TokenResponse]:
         async with self.uow:
             org_repo = WorkspaceRepository(self.uow.session)
 
@@ -307,7 +306,7 @@ class AuthService:
                 .where(
                     RefreshToken.token == refresh_token,
                     RefreshToken.is_revoked.is_(False),
-                    RefreshToken.expires_at > datetime.now(timezone.utc),
+                    RefreshToken.expires_at > datetime.now(UTC),
                 )
             )
             result = await self.uow.session.execute(stmt)
@@ -334,7 +333,7 @@ class AuthService:
         rt = RefreshToken(
             user_id=user.id,
             token=refresh_token_str,
-            expires_at=datetime.now(timezone.utc)
+            expires_at=datetime.now(UTC)
             + timedelta(days=settings.refresh_token_expire_days),
         )
         self.uow.session.add(rt)
@@ -365,14 +364,14 @@ class AuthService:
             stmt = (
                 update(Workspace)
                 .where(Workspace.id == workspace_id)
-                .values(deleted_at=datetime.now(timezone.utc))
+                .values(deleted_at=datetime.now(UTC))
             )
             await self.uow.session.execute(stmt)
 
             stmt_members = (
                 update(WorkspaceMember)
                 .where(WorkspaceMember.workspace_id == workspace_id)
-                .values(deleted_at=datetime.now(timezone.utc))
+                .values(deleted_at=datetime.now(UTC))
             )
             await self.uow.session.execute(stmt_members)
 

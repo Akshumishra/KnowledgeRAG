@@ -1,5 +1,6 @@
 import abc
-from typing import BinaryIO, AsyncGenerator
+from collections.abc import AsyncGenerator
+from typing import BinaryIO
 
 
 class BaseStorageProvider(abc.ABC):
@@ -14,25 +15,21 @@ class BaseStorageProvider(abc.ABC):
         """
         Upload a file and return its storage path/URI.
         """
-        pass
 
     @abc.abstractmethod
     async def download_file(self, storage_path: str) -> bytes:
         """
         Download a file by its storage path.
         """
-        pass
 
     @abc.abstractmethod
     async def delete_file(self, storage_path: str) -> bool:
         """
         Delete a file.
         """
-        pass
 
     @abc.abstractmethod
     async def get_stream(self, storage_path: str) -> AsyncGenerator[bytes, None]:
         """
         Get an async generator yielding file chunks (useful for streaming large files).
         """
-        pass

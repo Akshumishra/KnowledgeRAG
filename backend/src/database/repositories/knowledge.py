@@ -1,5 +1,5 @@
-from typing import Optional, List
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.repositories.base import BaseRepository
 from src.models.knowledge import Document
@@ -9,7 +9,7 @@ class DocumentRepository(BaseRepository[Document]):
     def __init__(self, session: AsyncSession):
         super().__init__(Document, session)
 
-    async def list_by_org(self, workspace_id: str) -> List[Document]:
+    async def list_by_org(self, workspace_id: str) -> list[Document]:
         stmt = select(Document).where(Document.workspace_id == workspace_id)
         stmt = stmt.order_by(Document.created_at.desc())
         result = await self.session.execute(stmt)
@@ -25,7 +25,7 @@ class DocumentRepository(BaseRepository[Document]):
 
     async def get_by_hash_and_workspace(
         self, file_hash: str, workspace_id: str
-    ) -> Optional[Document]:
+    ) -> Document | None:
         stmt = select(Document).where(
             Document.file_hash == file_hash,
             Document.workspace_id == workspace_id,

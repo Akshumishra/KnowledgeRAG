@@ -1,10 +1,12 @@
 from __future__ import annotations
-import bcrypt
 
-from datetime import datetime, timedelta, timezone
-from typing import Any, Optional
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+import bcrypt
 from cryptography.fernet import Fernet
 from jose import JWTError, jwt
+
 from src.core.config import settings
 
 
@@ -22,11 +24,11 @@ def verify_password(plain: str, hashed: str) -> bool:
 
 def create_access_token(
     subject: str,
-    extra: Optional[dict[str, Any]] = None,
-    expires_delta: Optional[timedelta] = None,
+    extra: dict[str, Any] | None = None,
+    expires_delta: timedelta | None = None,
 ) -> str:
     """Create a signed JWT access token."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + (
         expires_delta or timedelta(minutes=settings.access_token_expire_minutes)
     )
@@ -43,7 +45,7 @@ def create_access_token(
 
 def create_refresh_token(subject: str) -> str:
     """Create a signed JWT refresh token with longer expiry."""
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     expire = now + timedelta(days=settings.refresh_token_expire_days)
     payload = {
         "sub": subject,
@@ -62,7 +64,7 @@ def decode_token(token: str) -> dict[str, Any]:
     return jwt.decode(token, settings.secret_key, algorithms=[settings.jwt_algorithm])
 
 
-def is_token_valid(token: str, token_type: str = "access") -> Optional[dict]:
+def is_token_valid(token: str, token_type: str = "access") -> dict | None:
     """Return decoded payload if valid, else None."""
     try:
         payload = decode_token(token)

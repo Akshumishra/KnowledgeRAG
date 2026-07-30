@@ -2,8 +2,8 @@
 Context Builder and Token Budget Manager.
 """
 
-from typing import List, Dict, Any, Tuple
 import logging
+from typing import Any
 
 logger = logging.getLogger(__name__)
 
@@ -33,7 +33,7 @@ class TokenBudgetManager:
     def get_remaining(self) -> int:
         return max(0, self.max_context_window - self.used_tokens)
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """
         Returns metrics required by the frontend UI.
         """
@@ -66,10 +66,10 @@ class ContextBuilder:
         self,
         system_prompt: str,
         user_query: str,
-        retrieved_chunks: List[Dict[str, Any]],
+        retrieved_chunks: list[dict[str, Any]],
         model_name: str,
-        chat_history: List[Dict[str, str]] = None,
-    ) -> Tuple[List[Dict[str, str]], List[Dict[str, Any]], Dict[str, Any]]:
+        chat_history: list[dict[str, str]] | None = None,
+    ) -> tuple[list[dict[str, str]], list[dict[str, Any]], dict[str, Any]]:
         """
         Constructs the final prompt string, filtering out chunks that exceed the token budget.
         Returns:

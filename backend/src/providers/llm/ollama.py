@@ -1,8 +1,9 @@
-import httpx
 import json
-from typing import AsyncGenerator, Dict, List
-from src.providers.llm.base import BaseLLMProvider
+from collections.abc import AsyncGenerator
+
+import httpx
 from src.core.constants import LLMModelConstants
+from src.providers.llm.base import BaseLLMProvider
 
 
 class OllamaProvider(BaseLLMProvider):
@@ -45,22 +46,21 @@ class OllamaProvider(BaseLLMProvider):
         if "temperature" in kwargs:
             payload["options"] = {"temperature": kwargs["temperature"]}
 
-        async with httpx.AsyncClient() as client:
-            async with client.stream(
-                "POST", f"{self.base_url}/api/chat", json=payload, timeout=600.0
-            ) as response:
-                response.raise_for_status()
-                async for line in response.aiter_lines():
-                    if line.strip():
-                        try:
-                            data = json.loads(line)
-                            content = data.get("message", {}).get("content", "")
-                            if content:
-                                yield content
-                        except json.JSONDecodeError:
-                            pass
+        async with httpx.AsyncClient() as client, client.stream(
+            "POST", f"{self.base_url}/api/chat", json=payload, timeout=600.0
+        ) as response:
+            response.raise_for_status()
+            async for line in response.aiter_lines():
+                if line.strip():
+                    try:
+                        data = json.loads(line)
+                        content = data.get("message", {}).get("content", "")
+                        if content:
+                            yield content
+                    except json.JSONDecodeError:
+                        pass
 
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         try:
             async with httpx.AsyncClient() as client:
                 response = await client.get(f"{self.base_url}/api/tags", timeout=30.0)
@@ -71,7 +71,7 @@ class OllamaProvider(BaseLLMProvider):
                 ]
                 models.sort(key=lambda x: x["name"])
                 return models
-        except Exception:
+        except Exception:  # noqa: BLE001
             return []
 
     def supports_streaming(self) -> bool:

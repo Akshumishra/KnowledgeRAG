@@ -1,14 +1,15 @@
+
 from fastapi import APIRouter, Depends
-from typing import List
+
+from src.api.dependencies import get_current_user, get_service
+from src.models.auth import User
 from src.schemas.user import UserResponse
 from src.services.user_service import UserService
-from src.api.dependencies import get_service, get_current_user
-from src.models.auth import User
 
 router = APIRouter(prefix="/users", tags=["users"])
 
 
-@router.get("/", response_model=List[UserResponse])
+@router.get("/", response_model=list[UserResponse])
 async def list_users(
     service: UserService = Depends(get_service(UserService)),
     current_user: User = Depends(get_current_user),

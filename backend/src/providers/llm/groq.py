@@ -1,10 +1,9 @@
-from typing import AsyncGenerator, Dict, List
-from groq import AsyncGroq
+from collections.abc import AsyncGenerator
 
-from src.providers.llm.base import BaseLLMProvider
-from src.providers.llm.base import BaseLLMProvider
-from src.llm.rag.constant import RAGConstant
+from groq import AsyncGroq
 from src.core.constants import LLMModelConstants
+from src.llm.rag.constant import RAGConstant
+from src.providers.llm.base import BaseLLMProvider
 
 
 class GroqProvider(BaseLLMProvider):
@@ -55,11 +54,11 @@ class GroqProvider(BaseLLMProvider):
             if chunk.choices and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
 
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         try:
             models = await self.client.models.list()
             return [{"id": m.id, "name": m.id} for m in models.data]
-        except Exception:
+        except Exception:  # noqa: BLE001
             return RAGConstant.FALLBACK_GROQ_MODELS
 
     def supports_streaming(self) -> bool:

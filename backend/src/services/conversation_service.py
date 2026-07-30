@@ -1,17 +1,19 @@
-from typing import List
-from src.core.exceptions import NotFoundError, ForbiddenError
-from src.database.uow import UnitOfWork
+
+from datetime import UTC
+
+from src.core.exceptions import ForbiddenError, NotFoundError
 from src.database.repositories.chat import ConversationRepository, MessageRepository
+from src.database.uow import UnitOfWork
 from src.models.auth import User
 from src.models.chat import Conversation
-from src.schemas.chat import ConversationResponse, ConversationCreate, MessageResponse
+from src.schemas.chat import ConversationCreate, ConversationResponse, MessageResponse
 
 
 class ConversationService:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def list_conversations(self, user: User) -> List[ConversationResponse]:
+    async def list_conversations(self, user: User) -> list[ConversationResponse]:
         async with self.uow:
             repo = ConversationRepository(self.uow.session)
             convs = await repo.list_by_user(user.id, user.workspace_id)
@@ -76,7 +78,7 @@ class ConversationService:
 
     async def get_messages(
         self, conversation_id: str, user: User
-    ) -> List[MessageResponse]:
+    ) -> list[MessageResponse]:
         async with self.uow:
             conv_repo = ConversationRepository(self.uow.session)
             msg_repo = MessageRepository(self.uow.session)
@@ -118,14 +120,16 @@ class ConversationService:
             if conv.user_id != user.id:
                 raise ForbiddenError()
 
-            from datetime import datetime, timezone
+            from datetime import datetime
+
             from sqlalchemy import update
+
             from src.models.chat import Conversation
 
             stmt = (
                 update(Conversation)
                 .where(Conversation.id == conversation_id)
-                .values(deleted_at=datetime.now(timezone.utc))
+                .values(deleted_at=datetime.now(UTC))
             )
             await self.uow.session.execute(stmt)
             await self.uow.commit()

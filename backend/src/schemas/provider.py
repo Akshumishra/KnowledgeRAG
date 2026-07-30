@@ -1,32 +1,30 @@
 from __future__ import annotations
 
-from datetime import datetime
-from typing import Optional, List
 from pydantic import BaseModel, Field
 
 
 class ProviderCreate(BaseModel):
     name: str
     slug: str
-    default_models: Optional[str] = ""
+    default_models: str | None = ""
     is_local: bool = False
 
 
 class APIKeyCreate(BaseModel):
     provider_id: str
     api_key: str = Field(..., min_length=1)
-    display_name: Optional[str] = None
+    display_name: str | None = None
 
 
 class ProviderResponse(BaseModel):
     id: str
     name: str
     slug: str
-    default_models: Optional[str] = None
+    default_models: str | None = None
 
 
 class SaveModelsRequest(BaseModel):
-    models: List[str]
+    models: list[str]
     api_key_id: str
 
 

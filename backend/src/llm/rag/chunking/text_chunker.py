@@ -1,30 +1,30 @@
 from __future__ import annotations
 
-import re
 import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from datetime import UTC, datetime
+from typing import Any
+
 from src.llm.rag.constant import RAGConstant
 
 _tokenizer = None
 
 
 def semantic_chunk_blocks(
-    blocks: List[Dict[str, Any]],
+    blocks: list[dict[str, Any]],
     document_id: str,
     document_name: str,
     workspace_id: str,
-    upload_date: Optional[str] = None,
+    upload_date: str | None = None,
     version: int = 1,
     chunk_size: int = RAGConstant.DEFAULT_CHUNK_SIZE,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     if not upload_date:
-        upload_date = datetime.now(timezone.utc).isoformat()
+        upload_date = datetime.now(UTC).isoformat()
 
-    chunks: List[Dict[str, Any]] = []
+    chunks: list[dict[str, Any]] = []
     chunk_index = 0
 
-    pending_chunk: Optional[Dict[str, Any]] = None
+    pending_chunk: dict[str, Any] | None = None
 
     def _flush_pending():
         nonlocal chunk_index, pending_chunk
@@ -159,7 +159,7 @@ def _make_chunk_base(
     parent_heading: str,
     upload_date: str,
     version: int,
-) -> Dict[str, Any]:
+) -> dict[str, Any]:
     return {
         "chunk_id": chunk_id,
         "content": content,
@@ -190,15 +190,15 @@ def _count_tokens(text: str) -> int:
     return len(_get_tokenizer().encode(text))
 
 
-def _split_text_recursive(text: str, chunk_size: int, overlap: int) -> List[str]:
+def _split_text_recursive(text: str, chunk_size: int, overlap: int) -> list[str]:
     """Langchain-style recursive character text splitter based on tokens."""
     separators = ["\n\n", "\n", ". ", " ", ""]
     return _do_split(text, separators, chunk_size, overlap)
 
 
 def _do_split(
-    text: str, separators: List[str], chunk_size: int, overlap: int
-) -> List[str]:
+    text: str, separators: list[str], chunk_size: int, overlap: int
+) -> list[str]:
     if _count_tokens(text) <= chunk_size:
         return [text]
 
@@ -262,7 +262,7 @@ def _do_split(
     return good_splits
 
 
-def _hard_token_split(text: str, chunk_size: int, overlap: int) -> List[str]:
+def _hard_token_split(text: str, chunk_size: int, overlap: int) -> list[str]:
     tokens = _get_tokenizer().encode(text)
     chunks = []
     step = max(1, chunk_size - overlap)

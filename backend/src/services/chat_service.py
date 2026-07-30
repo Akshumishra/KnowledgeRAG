@@ -1,43 +1,44 @@
 import asyncio
 import builtins
-import logging
 import json
+import json as _json
+import logging
 import time
 import traceback
 import uuid
-from datetime import datetime, timezone
-import json as _json
-from typing import AsyncGenerator
+from collections.abc import AsyncGenerator
+from datetime import UTC, datetime
+
 from fastapi import Request
 from sqlalchemy import select, update
 
-from src.services.stream_manager import stream_manager
+from src.core.crypto import decrypt
 from src.core.exceptions import (
-    NotFoundError,
-    ForbiddenError,
     BadRequestError,
     ConflictError,
+    ForbiddenError,
+    NotFoundError,
 )
-from src.database.uow import UnitOfWork
 from src.database.repositories.chat import (
     ConversationRepository,
     MessageRepository,
 )
 from src.database.repositories.workspace import WorkspaceAPIKeyRepository
-from src.providers.llm.base import BaseLLMProvider
-from src.llm.rag.context import ContextBuilder
-from src.llm.rag.retrieval.search import Retriever
-from src.models.auth import User
-from src.models.chat import Message
-from src.schemas.chat import ChatRequest
-from src.services.provider_service import ProviderService
-from src.core.crypto import decrypt
-from src.models.knowledge import Document
-from src.llm.capability_manager import ModelCapabilityManager
+from src.database.uow import UnitOfWork
 from src.llm.capability_discovery import (
     DiscoveryService,
     _extract_unsupported_param,
 )
+from src.llm.capability_manager import ModelCapabilityManager
+from src.llm.rag.context import ContextBuilder
+from src.llm.rag.retrieval.search import Retriever
+from src.models.auth import User
+from src.models.chat import Message
+from src.models.knowledge import Document
+from src.providers.llm.base import BaseLLMProvider
+from src.schemas.chat import ChatRequest
+from src.services.provider_service import ProviderService
+from src.services.stream_manager import stream_manager
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +84,7 @@ class ChatService:
         async with self.uow:
             conv_repo = ConversationRepository(self.uow.session)
             msg_repo = MessageRepository(self.uow.session)
-            apikey_repo = WorkspaceAPIKeyRepository(self.uow.session)
+            WorkspaceAPIKeyRepository(self.uow.session)
 
             conv = await conv_repo.get(conversation_id)
             if not conv or conv.workspace_id != workspace_id:
@@ -135,7 +136,7 @@ class ChatService:
                 content="",
                 status="thinking",
                 generation_id=generation_id,
-                started_at=datetime.now(timezone.utc),
+                started_at=datetime.now(UTC),
             )
             msg_repo.add(assistant_msg)
 
@@ -161,7 +162,7 @@ class ChatService:
 
         queue = asyncio.Queue()
 
-        bg_task = asyncio.create_task(
+        asyncio.create_task(
             self._background_generate(
                 queue,
                 assistant_msg_id,
@@ -195,9 +196,9 @@ class ChatService:
                         break
 
                     yield event
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error in stream loop: {e}")
         finally:
             pass
@@ -223,7 +224,7 @@ class ChatService:
             and message_id not in stream_manager.buffers
         ):
             # If already done and buffer cleaned up, just return
-            yield f"event: done\ndata: {{}}\n\n"
+            yield "event: done\ndata: {}\n\n"
             return
 
         # Flush existing buffer
@@ -248,9 +249,9 @@ class ChatService:
                     if event is None:
                         break
                     yield event
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     continue
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error(f"Error in reconnect stream loop: {e}")
         finally:
             if message_id in stream_manager.clients:
@@ -280,7 +281,7 @@ class ChatService:
                         workspace_id=workspace_id,
                         limit=5,
                     )
-                except Exception:
+                except Exception:  # noqa: BLE001
                     retrieved_chunks = []
 
                 if retrieved_chunks:
@@ -378,7 +379,6 @@ class ChatService:
 
                     async def _empty():
                         yield ""
-                        return
 
                     stream_gen = _empty()
                 except Exception as e:
@@ -392,7 +392,7 @@ class ChatService:
                         safe_kwargs = mcm.filter_kwargs(raw_kwargs, cap)
                         stream_gen = llm_provider.stream(**safe_kwargs)
                     else:
-                        raise e
+                        raise
 
                 stmt = (
                     update(Message)
@@ -429,7 +429,7 @@ class ChatService:
                 await queue.put(stats_str)
                 await stream_manager.push_event(assistant_msg_id, stats_str)
 
-                done_str = f"event: done\ndata: {{}}\n\n"
+                done_str = "event: done\ndata: {}\n\n"
                 await queue.put(done_str)
                 await stream_manager.push_event(assistant_msg_id, done_str)
 
@@ -447,13 +447,13 @@ class ChatService:
                         sources_json=(
                             _json.dumps(sources_data) if sources_data else None
                         ),
-                        completed_at=datetime.now(timezone.utc),
+                        completed_at=datetime.now(UTC),
                     )
                 )
                 await uow.session.execute(stmt)
                 await uow.commit()
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             traceback.print_exc()
             try:
                 error_str = str(e)
@@ -470,13 +470,13 @@ class ChatService:
                         .values(
                             status="failed",
                             error_message=error_str,
-                            completed_at=datetime.now(timezone.utc),
+                            completed_at=datetime.now(UTC),
                         )
                     )
                     await error_uow.session.execute(stmt)
                     await error_uow.commit()
-            except Exception:
-                pass
+            except Exception:  # noqa: BLE001  # best-effort error recovery; don't shadow original exception
+                logger.debug("Error recovery handler failed; original error already logged.")
         finally:
             await queue.put(None)
             await stream_manager.finish_stream(assistant_msg_id)

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import List, Optional
+
 from pydantic import BaseModel
 
 from src.schemas.conversation import RetrievedSource
@@ -15,10 +15,10 @@ class MessageResponse(BaseModel):
     prompt_tokens: int
     completion_tokens: int
     total_tokens: int
-    model_id: Optional[str] = None
+    model_id: str | None = None
     latency_ms: float
-    retrieved_sources: List[RetrievedSource] = []
-    feedback: Optional[str]
+    retrieved_sources: list[RetrievedSource] = []
+    feedback: str | None
     created_at: datetime
 
     model_config = {"from_attributes": True}

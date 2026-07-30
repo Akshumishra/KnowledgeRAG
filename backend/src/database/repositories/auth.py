@@ -1,7 +1,7 @@
-from typing import Optional
+
 from sqlalchemy import select
-from sqlalchemy.orm import selectinload
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 from src.database.repositories.base import BaseRepository
 from src.models.auth import User, WorkspaceMember
 
@@ -10,7 +10,7 @@ class UserRepository(BaseRepository[User]):
     def __init__(self, session: AsyncSession):
         super().__init__(User, session)
 
-    async def get(self, id: str) -> Optional[User]:
+    async def get(self, id: str) -> User | None:
         stmt = (
             select(User)
             .options(selectinload(User.workspaces))
@@ -19,7 +19,7 @@ class UserRepository(BaseRepository[User]):
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def get_by_email(self, email: str) -> Optional[User]:
+    async def get_by_email(self, email: str) -> User | None:
         stmt = (
             select(User)
             .options(selectinload(User.workspaces))
@@ -49,7 +49,7 @@ class WorkspaceMemberRepository(BaseRepository[WorkspaceMember]):
 
     async def get_membership(
         self, user_id: str, workspace_id: str
-    ) -> Optional[WorkspaceMember]:
+    ) -> WorkspaceMember | None:
         stmt = select(WorkspaceMember).where(
             WorkspaceMember.user_id == user_id,
             WorkspaceMember.workspace_id == workspace_id,

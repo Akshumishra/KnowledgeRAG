@@ -1,8 +1,8 @@
-from typing import AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
+
 import openai
-from src.providers.llm.base import BaseLLMProvider
 from src.llm.rag.constant import RAGConstant
-import base64
+from src.providers.llm.base import BaseLLMProvider
 
 
 class OpenAIProvider(BaseLLMProvider):
@@ -53,7 +53,7 @@ class OpenAIProvider(BaseLLMProvider):
             if chunk.choices and chunk.choices[0].delta.content:
                 yield chunk.choices[0].delta.content
 
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         try:
             models = await self.client.models.list()
             chat_models = []
@@ -62,7 +62,7 @@ class OpenAIProvider(BaseLLMProvider):
                     chat_models.append({"id": m.id, "name": m.id})
             chat_models.sort(key=lambda x: x["name"])
             return chat_models
-        except Exception:
+        except Exception:  # noqa: BLE001
             return RAGConstant.FALLBACK_OPENAI_MODELS
 
     def supports_streaming(self) -> bool:

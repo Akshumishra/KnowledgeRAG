@@ -1,7 +1,7 @@
-from typing import List, Dict, Any
+from typing import Any
 
 
-def build_sections(blocks: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+def build_sections(blocks: list[dict[str, Any]]) -> list[dict[str, Any]]:
     """
     Groups individual granular blocks (like single paragraphs or list items)
     into larger semantic sections based on heading boundaries.

@@ -1,11 +1,13 @@
 from __future__ import annotations
-import logging
+
 import asyncio
-from typing import List, Optional
-from sqlalchemy import select, and_, func
+import logging
+
+from sqlalchemy import and_, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.knowledge import DocumentChunk
+
 from src.llm.rag.embeddings.model import get_embedding_model
+from src.models.knowledge import DocumentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -29,7 +31,7 @@ class Retriever:
         workspace_id: str,
         alpha: float = 0.8,
         limit: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """
         Executes semantic and keyword searches concurrently, normalizes their scores,
         and combines them using the given alpha weighting.
@@ -47,7 +49,7 @@ class Retriever:
         )
 
         # Helper to normalize scores [0, 1] based on the max score in the set
-        def normalize_scores(results: List[dict]):
+        def normalize_scores(results: list[dict]):
             if not results:
                 return
             max_score = max((r["score"] for r in results), default=0.0)
@@ -95,7 +97,7 @@ class Retriever:
         query: str,
         workspace_id: str,
         limit: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """Pure vector (semantic) search with org and scope isolation."""
         embedded = await self.embedder.encode([query], normalize_embeddings=True)
         query_vector = embedded[0]
@@ -147,7 +149,7 @@ class Retriever:
         query: str,
         workspace_id: str,
         limit: int = 10,
-    ) -> List[dict]:
+    ) -> list[dict]:
         """Pure Keyword search using PostgreSQL Full Text Search."""
         filters = self._build_filters(workspace_id)
 
@@ -164,7 +166,7 @@ class Retriever:
         try:
             result = await session.execute(stmt)
             rows = result.all()
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Keyword search failed: %s", e)
             return []
 

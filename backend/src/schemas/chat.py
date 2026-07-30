@@ -1,5 +1,6 @@
 from datetime import datetime
-from typing import Optional, List, Dict, Any
+from typing import Any
+
 from pydantic import BaseModel, Field
 
 
@@ -21,22 +22,22 @@ class MessageResponse(BaseModel):
     content: str
     status: str = "completed"
     created_at: datetime
-    sources: List[Dict[str, Any]] = []
-    prompt_tokens: Optional[int] = None
-    completion_tokens: Optional[int] = None
-    total_tokens: Optional[int] = None
-    model_id: Optional[str] = None
-    latency_ms: Optional[float] = None
+    sources: list[dict[str, Any]] = []
+    prompt_tokens: int | None = None
+    completion_tokens: int | None = None
+    total_tokens: int | None = None
+    model_id: str | None = None
+    latency_ms: float | None = None
 
     model_config = {"from_attributes": True}
 
 
 class ConversationDetailResponse(ConversationResponse):
-    messages: List[MessageResponse] = []
+    messages: list[MessageResponse] = []
 
 
 class ChatRequest(BaseModel):
     message: str = Field(..., min_length=1)
-    model_provider: Optional[str] = None
-    model_name: Optional[str] = None
-    api_key: Optional[str] = None
+    model_provider: str | None = None
+    model_name: str | None = None
+    api_key: str | None = None

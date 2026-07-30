@@ -1,8 +1,8 @@
-from typing import Dict, List, AsyncGenerator
-import openai
+from collections.abc import AsyncGenerator
 
-from src.providers.llm.openai import OpenAIProvider
+import openai
 from src.llm.rag.constant import RAGConstant
+from src.providers.llm.openai import OpenAIProvider
 
 
 class OpenRouterProvider(OpenAIProvider):
@@ -12,7 +12,7 @@ class OpenRouterProvider(OpenAIProvider):
             api_key=api_key, base_url="https://openrouter.ai/api/v1"
         )
 
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         try:
             models = await self.client.models.list()
             chat_models = []
@@ -20,7 +20,7 @@ class OpenRouterProvider(OpenAIProvider):
                 chat_models.append({"id": m.id, "name": m.id})
             chat_models.sort(key=lambda x: x["name"])
             return chat_models
-        except Exception:
+        except Exception:  # noqa: BLE001
             return RAGConstant.FALLBACK_OPENROUTER_MODELS
 
     async def generate(self, prompt: str, system_prompt: str, **kwargs) -> str:

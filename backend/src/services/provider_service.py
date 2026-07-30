@@ -1,27 +1,27 @@
-from typing import List, Dict, Any
-from src.core.exceptions import NotFoundError, ForbiddenError
-from src.core.crypto import encrypt, decrypt
-from cryptography.fernet import InvalidToken
-from src.database.uow import UnitOfWork
-from src.database.repositories.workspace import WorkspaceAPIKeyRepository
+from typing import Any
+
+from sqlalchemy import delete, select
+
+from src.core.crypto import decrypt, encrypt
+from src.core.exceptions import ForbiddenError, NotFoundError
 from src.database.repositories.settings import (
     LLMProviderRepository,
     WorkspaceModelRepository,
 )
+from src.database.repositories.workspace import WorkspaceAPIKeyRepository
+from src.database.uow import UnitOfWork
+from src.models.auth import User, workspace_member_table
+from src.models.settings import LLMProvider, ModelCapability
 from src.models.workspace import WorkspaceAPIKey, WorkspaceModel
-from src.schemas.provider import APIKeyCreate, ProviderResponse
-from sqlalchemy import select, delete
-from src.models.settings import ModelCapability
-from src.models.settings import LLMProvider
-from src.models.auth import workspace_member_table
 from src.providers.llm.factory import get_provider
+from src.schemas.provider import APIKeyCreate, ProviderCreate, ProviderResponse
 
 
 class ProviderService:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def list_providers(self) -> List[ProviderResponse]:
+    async def list_providers(self) -> list[ProviderResponse]:
         async with self.uow:
             repo = LLMProviderRepository(self.uow.session)
             providers = await repo.list()
@@ -36,7 +36,7 @@ class ProviderService:
             ]
 
     async def create_provider(
-        self, data: "ProviderCreate", workspace_id: str, actor: "User"
+        self, data: ProviderCreate, workspace_id: str, actor: User
     ) -> ProviderResponse:
         if not await self._is_workspace_owner(actor.id, workspace_id):
             raise ForbiddenError("Only owners can create LLM providers.")
@@ -57,7 +57,7 @@ class ProviderService:
                 default_models=new_provider.default_models,
             )
 
-    async def get_active_providers(self, workspace_id: str) -> List[Dict[str, Any]]:
+    async def get_active_providers(self, workspace_id: str) -> list[dict[str, Any]]:
         async with self.uow:
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             keys = await repo.list(workspace_id=workspace_id)
@@ -81,7 +81,7 @@ class ProviderService:
 
     async def get_api_keys(
         self, workspace_id: str, actor: "User", scope: str = "workspace"
-    ) -> List[Dict[str, Any]]:
+    ) -> list[dict[str, Any]]:
         if not await self._is_workspace_owner(actor.id, workspace_id):
             raise ForbiddenError()
 
@@ -113,7 +113,7 @@ class ProviderService:
         data: APIKeyCreate,
         actor: "User",
         scope: str = "workspace",
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         if not await self._is_workspace_owner(actor.id, workspace_id):
             raise ForbiddenError()
 
@@ -189,7 +189,7 @@ class ProviderService:
             key.is_enabled = is_enabled
             await self.uow.commit()
 
-    async def _resolve_key(self, provider_id: str, workspace_id: str, actor: "User", model_name: str = None):
+    async def _resolve_key(self, provider_id: str, workspace_id: str, actor: "User", model_name: str | None = None):
         """Resolves the key for Org scope. Uses model-specific key if set."""
         if model_name:
             stmt = select(WorkspaceModel.api_key_id).where(
@@ -220,14 +220,14 @@ class ProviderService:
             if not key:
                 raise NotFoundError("API Key", provider_id)
             api_key = decrypt(key.encrypted_key)
-            provider = get_provider(provider_id, api_key)
+            get_provider(provider_id, api_key)
             is_healthy = True
             await self.uow.commit()
             return is_healthy
 
     async def list_models(
         self, provider_id: str, workspace_id: str, actor: "User"
-    ) -> List[Dict[str, str]]:
+    ) -> list[dict[str, str]]:
         async with self.uow:
             key = await self._resolve_key(provider_id, workspace_id, actor)
             if not key:
@@ -254,12 +254,12 @@ class ProviderService:
             await self.uow.commit()
             return models
 
-    async def get_workspace_models(self, workspace_id: str) -> Dict[str, List[Dict[str, str]]]:
+    async def get_workspace_models(self, workspace_id: str) -> dict[str, list[dict[str, str]]]:
         """Return a dict of {provider_id: [{"name": model_name, "api_key_id": api_key_id}, ...]} for a workspace."""
         async with self.uow:
             repo = WorkspaceModelRepository(self.uow.session)
             all_models = await repo.get_all_for_workspace(workspace_id)
-            result: Dict[str, List[Dict[str, str]]] = {}
+            result: dict[str, list[dict[str, str]]] = {}
             for m in all_models:
                 result.setdefault(m.provider_id, []).append(
                     {"name": m.model_name, "api_key_id": m.api_key_id}
@@ -270,7 +270,7 @@ class ProviderService:
         self,
         workspace_id: str,
         provider_id: str,
-        models: List[str],
+        models: list[str],
         api_key_id: str,
         actor: "User",
     ) -> None:

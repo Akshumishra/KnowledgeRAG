@@ -1,7 +1,8 @@
 from datetime import datetime
-from typing import Optional
-from sqlalchemy import Float, Integer, String, ForeignKey, Text, DateTime
+
+from sqlalchemy import DateTime, Float, ForeignKey, Integer, String, Text
 from sqlalchemy.orm import Mapped, mapped_column
+
 from src.models.base import BaseModel
 
 
@@ -29,22 +30,22 @@ class Message(BaseModel):
     status: Mapped[str] = mapped_column(
         String(20), default="completed"
     )  # 'thinking', 'generating', 'completed', 'failed'
-    generation_id: Mapped[Optional[str]] = mapped_column(
+    generation_id: Mapped[str | None] = mapped_column(
         String(36), nullable=True, index=True
     )
-    started_at: Mapped[Optional[datetime]] = mapped_column(
+    started_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    completed_at: Mapped[Optional[datetime]] = mapped_column(
+    completed_at: Mapped[datetime | None] = mapped_column(
         DateTime(timezone=True), nullable=True
     )
-    error_message: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
+    error_message: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    prompt_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    completion_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    total_tokens: Mapped[Optional[int]] = mapped_column(Integer, nullable=True)
-    latency_ms: Mapped[Optional[float]] = mapped_column(Float, nullable=True)
-    model_id: Mapped[Optional[str]] = mapped_column(String(100), nullable=True)
-    sources_json: Mapped[Optional[str]] = mapped_column(
+    prompt_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    completion_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    total_tokens: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    latency_ms: Mapped[float | None] = mapped_column(Float, nullable=True)
+    model_id: Mapped[str | None] = mapped_column(String(100), nullable=True)
+    sources_json: Mapped[str | None] = mapped_column(
         Text, nullable=True
     )  # JSON array

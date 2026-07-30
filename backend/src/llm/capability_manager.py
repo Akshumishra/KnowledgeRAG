@@ -1,8 +1,9 @@
 import logging
-from datetime import datetime, timezone
-from typing import Dict, Any, Optional
-from sqlalchemy.ext.asyncio import AsyncSession
+from datetime import UTC, datetime
+from typing import Any
+
 from sqlalchemy import select
+from sqlalchemy.ext.asyncio import AsyncSession
 
 from src.models.settings import ModelCapability
 
@@ -13,7 +14,7 @@ class FamilyProfileResolver:
     """Provides default capability profiles for well-known model families."""
 
     @staticmethod
-    def resolve(model_name: str) -> Optional[Dict[str, bool]]:
+    def resolve(model_name: str) -> dict[str, bool] | None:
         model = model_name.lower()
 
         base_caps = {
@@ -67,7 +68,7 @@ class ModelCapabilityManager:
                 capability_state=state,
                 capabilities=caps,
                 last_verified=(
-                    datetime.now(timezone.utc) if state == "Verified" else None
+                    datetime.now(UTC) if state == "Verified" else None
                 ),
             )
             self.session.add(cap)
@@ -76,8 +77,8 @@ class ModelCapabilityManager:
         return cap
 
     def filter_kwargs(
-        self, kwargs: Dict[str, Any], cap: ModelCapability
-    ) -> Dict[str, Any]:
+        self, kwargs: dict[str, Any], cap: ModelCapability
+    ) -> dict[str, Any]:
         """
         Filters kwargs based on known capabilities in the profile.
         If a capability is explicitly False, it is stripped from the request.
@@ -105,6 +106,6 @@ class ModelCapabilityManager:
         new_caps[unsupported_param] = False
         cap.capabilities = new_caps
         cap.capability_state = "Stale"
-        cap.last_verified = datetime.now(timezone.utc)
+        cap.last_verified = datetime.now(UTC)
         self.session.add(cap)
         await self.session.flush()

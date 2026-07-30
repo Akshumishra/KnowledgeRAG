@@ -3,18 +3,19 @@ from __future__ import annotations
 import csv
 import json
 import logging
-import xml.etree.ElementTree as ET
 import os
-import requests
+import xml.etree.ElementTree as ET
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any
+
+import requests
 
 logger = logging.getLogger(__name__)
 
 _PLAIN_TEXT_FORMATS = {".txt", ".md", ".markdown"}
 
 
-def load_document(file_path: str) -> List[Dict[str, Any]]:
+def load_document(file_path: str) -> list[dict[str, Any]]:
     """
     Route the file to the appropriate native parser and return a unified list of blocks.
     Each block: {type, content, metadata}
@@ -72,13 +73,13 @@ def _describe_image_hf(image_bytes: bytes) -> str:
             and "generated_text" in result[0]
         ):
             return result[0]["generated_text"].strip()
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Hugging Face image captioning failed: %s", e)
 
     return ""
 
 
-def _load_pdf(file_path: str) -> List[Dict[str, Any]]:
+def _load_pdf(file_path: str) -> list[dict[str, Any]]:
     """Parse PDF with pypdf and fallback camelot tables."""
     blocks = []
 
@@ -123,9 +124,9 @@ def _load_pdf(file_path: str) -> List[Dict[str, Any]]:
                                 },
                             }
                         )
-                except Exception as e:
+                except Exception as e:  # noqa: BLE001
                     logger.warning("Failed to process image on page %d: %s", i + 1, e)
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("pypdf extraction failed: %s", e)
 
     camelot_tables = _extract_tables_camelot(file_path)
@@ -134,7 +135,7 @@ def _load_pdf(file_path: str) -> List[Dict[str, Any]]:
     return blocks
 
 
-def _extract_tables_camelot(file_path: str) -> List[Dict[str, Any]]:
+def _extract_tables_camelot(file_path: str) -> list[dict[str, Any]]:
     try:
         import camelot
 
@@ -156,12 +157,12 @@ def _extract_tables_camelot(file_path: str) -> List[Dict[str, Any]]:
                 }
             )
         return result
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Camelot table extraction failed: %s", e)
         return []
 
 
-def _load_docx(file_path: str) -> List[Dict[str, Any]]:
+def _load_docx(file_path: str) -> list[dict[str, Any]]:
     try:
         import docx
     except ImportError:
@@ -209,12 +210,12 @@ def _load_docx(file_path: str) -> List[Dict[str, Any]]:
                     }
                 )
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("DOCX load error: %s", e)
     return blocks
 
 
-def _load_pptx(file_path: str) -> List[Dict[str, Any]]:
+def _load_pptx(file_path: str) -> list[dict[str, Any]]:
     try:
         from pptx import Presentation
     except ImportError:
@@ -242,12 +243,12 @@ def _load_pptx(file_path: str) -> List[Dict[str, Any]]:
                         },
                     }
                 )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("PPTX load error: %s", e)
     return blocks
 
 
-def _load_xlsx(file_path: str) -> List[Dict[str, Any]]:
+def _load_xlsx(file_path: str) -> list[dict[str, Any]]:
     try:
         import openpyxl
     except ImportError:
@@ -285,12 +286,12 @@ def _load_xlsx(file_path: str) -> List[Dict[str, Any]]:
                         },
                     }
                 )
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("XLSX load error: %s", e)
     return blocks
 
 
-def _load_plain_text(file_path: str) -> List[Dict[str, Any]]:
+def _load_plain_text(file_path: str) -> list[dict[str, Any]]:
     try:
         text = Path(file_path).read_text(encoding="utf-8", errors="replace")
         blocks = []
@@ -328,12 +329,12 @@ def _load_plain_text(file_path: str) -> List[Dict[str, Any]]:
                     }
                 )
         return blocks
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("Plain text load error: %s", e)
         return []
 
 
-def _load_csv(file_path: str) -> List[Dict[str, Any]]:
+def _load_csv(file_path: str) -> list[dict[str, Any]]:
     try:
         rows = []
         with open(file_path, "r", encoding="utf-8", errors="replace") as f:
@@ -359,12 +360,12 @@ def _load_csv(file_path: str) -> List[Dict[str, Any]]:
                 },
             }
         ]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("CSV load error: %s", e)
         return []
 
 
-def _load_json(file_path: str) -> List[Dict[str, Any]]:
+def _load_json(file_path: str) -> list[dict[str, Any]]:
     try:
         data = json.loads(Path(file_path).read_text(encoding="utf-8"))
         content = json.dumps(data, indent=2, ensure_ascii=False)
@@ -380,12 +381,12 @@ def _load_json(file_path: str) -> List[Dict[str, Any]]:
                 },
             }
         ]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("JSON load error: %s", e)
         return []
 
 
-def _load_xml(file_path: str) -> List[Dict[str, Any]]:
+def _load_xml(file_path: str) -> list[dict[str, Any]]:
     try:
         tree = ET.parse(file_path)
         root = tree.getroot()
@@ -405,6 +406,6 @@ def _load_xml(file_path: str) -> List[Dict[str, Any]]:
                 },
             }
         ]
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.error("XML load error: %s", e)
         return []

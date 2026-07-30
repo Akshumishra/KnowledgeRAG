@@ -1,11 +1,11 @@
 import os
-import shutil
-import aiofiles
 import uuid
+from collections.abc import AsyncGenerator
+
+import aiofiles
 from fastapi import UploadFile
-from typing import AsyncGenerator
-from src.providers.storage.base import BaseStorageProvider
 from src.core.config import settings
+from src.providers.storage.base import BaseStorageProvider
 
 
 class LocalStorageProvider(BaseStorageProvider):

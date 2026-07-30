@@ -1,16 +1,17 @@
 from __future__ import annotations
+
 import asyncio
 import logging
-from datetime import datetime, timezone
-from typing import Optional
+from datetime import UTC, datetime
+
 from sqlalchemy.ext.asyncio import AsyncSession
-from src.models.knowledge import Document
-from src.llm.rag.loaders.universal_loader import load_document
-from src.llm.rag.loaders.image_extractor import extract_and_describe_images
+
 from src.llm.rag.chunking.section_builder import build_sections
 from src.llm.rag.chunking.text_chunker import semantic_chunk_blocks
 from src.llm.rag.embeddings.model import get_embedding_model
-from src.models.knowledge import DocumentChunk
+from src.llm.rag.loaders.image_extractor import extract_and_describe_images
+from src.llm.rag.loaders.universal_loader import load_document
+from src.models.knowledge import Document, DocumentChunk
 
 logger = logging.getLogger(__name__)
 
@@ -41,8 +42,8 @@ class IngestionService:
         document: Document,
         workspace_id: str,
         storage_provider,
-        image_open_api_key: Optional[str] = None,
-        image_processing_model: Optional[str] = "gpt-5-nano",
+        image_open_api_key: str | None = None,
+        image_processing_model: str | None = "gpt-5-nano",
     ) -> None:
 
         file_path = document.storage_path
@@ -69,7 +70,7 @@ class IngestionService:
                 blocks.extend(image_blocks)
                 logger.info("Added %d image description blocks", len(image_blocks))
 
-            upload_date = datetime.now(timezone.utc).isoformat()
+            upload_date = datetime.now(UTC).isoformat()
 
             def _do_chunk():
                 sections = build_sections(blocks)
@@ -136,7 +137,7 @@ class IngestionService:
                 "Ingestion complete: document=%s chunks=%d", document.id, len(chunks)
             )
 
-        except Exception as e:
+        except Exception as e:  # noqa: BLE001
             logger.error("Ingestion failed for document=%s: %s", document.id, e)
             document.status = "failed"
             document.error_message = str(e)[:500]

@@ -1,18 +1,18 @@
-from typing import List
-from src.core.exceptions import ConflictError, ForbiddenError, NotFoundError
-from src.database.uow import UnitOfWork
-from src.database.repositories.auth import UserRepository
-from src.models.auth import User
-from src.models.auth import WorkspaceMember
+from datetime import UTC, datetime
+
 from sqlalchemy import select, update
-from datetime import datetime, timezone
+
+from src.core.exceptions import ConflictError, ForbiddenError, NotFoundError
+from src.database.repositories.auth import UserRepository
+from src.database.uow import UnitOfWork
+from src.models.auth import User, WorkspaceMember
 
 
 class UserService:
     def __init__(self, uow: UnitOfWork):
         self.uow = uow
 
-    async def list(self, workspace_id: str) -> List[User]:
+    async def list(self, workspace_id: str) -> list[User]:
         async with self.uow:
             user_repo = UserRepository(self.uow.session)
             return await user_repo.get_active_users_in_org(workspace_id)
@@ -52,7 +52,7 @@ class UserService:
                     WorkspaceMember.workspace_id == workspace_id,
                     WorkspaceMember.deleted_at.is_(None),
                 )
-                .values(deleted_at=datetime.now(timezone.utc))
+                .values(deleted_at=datetime.now(UTC))
             )
             result = await self.uow.session.execute(stmt)
             if result.rowcount == 0:
@@ -74,7 +74,7 @@ class UserService:
             return activity
 
     async def update_activity(
-        self, user_id: str, last_route: str, last_conversation_id: str = None
+        self, user_id: str, last_route: str, last_conversation_id: str | None = None
     ):
         from src.models.auth import UserActivity
 

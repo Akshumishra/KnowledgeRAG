@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import datetime
-from typing import Optional
+
 from pydantic import BaseModel
 
 
@@ -13,12 +13,12 @@ class DocumentResponse(BaseModel):
     file_type: str
     file_size: int
     status: str
-    error_message: Optional[str]
+    error_message: str | None
     is_enabled: bool = True
     chunk_count: int
     version: int
-    created_by: Optional[str]
-    uploader_name: Optional[str] = None
+    created_by: str | None
+    uploader_name: str | None = None
     created_at: datetime
     updated_at: datetime
 

@@ -1,5 +1,6 @@
-from typing import Any, Generic, List, Optional, Type, TypeVar
-from datetime import datetime, timezone
+from datetime import UTC, datetime
+from typing import Any, Generic, TypeVar
+
 from sqlalchemy import delete, select, update
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.orm import DeclarativeBase
@@ -13,18 +14,18 @@ class BaseRepository(Generic[ModelType]):
     Automatically filters out soft-deleted records if the model has a deleted_at column.
     """
 
-    def __init__(self, model: Type[ModelType], session: AsyncSession):
+    def __init__(self, model: type[ModelType], session: AsyncSession):
         self.model = model
         self.session = session
 
-    async def get(self, id: Any) -> Optional[ModelType]:
+    async def get(self, id: Any) -> ModelType | None:
         stmt = select(self.model).where(self.model.id == id)
         if hasattr(self.model, "deleted_at"):
             stmt = stmt.where(self.model.deleted_at.is_(None))
         result = await self.session.execute(stmt)
         return result.scalars().first()
 
-    async def get_by(self, **kwargs) -> Optional[ModelType]:
+    async def get_by(self, **kwargs) -> ModelType | None:
         stmt = select(self.model).filter_by(**kwargs)
         if hasattr(self.model, "deleted_at"):
             stmt = stmt.where(self.model.deleted_at.is_(None))
@@ -33,7 +34,7 @@ class BaseRepository(Generic[ModelType]):
 
     async def list(
         self, *, skip: int = 0, limit: int = 100, **kwargs
-    ) -> List[ModelType]:
+    ) -> list[ModelType]:
         stmt = select(self.model).filter_by(**kwargs)
         if hasattr(self.model, "deleted_at"):
             stmt = stmt.where(self.model.deleted_at.is_(None))
@@ -54,7 +55,7 @@ class BaseRepository(Generic[ModelType]):
         stmt = (
             update(self.model)
             .where(self.model.id == id)
-            .values(deleted_at=datetime.now(timezone.utc))
+            .values(deleted_at=datetime.now(UTC))
         )
         result = await self.session.execute(stmt)
         return result.rowcount > 0

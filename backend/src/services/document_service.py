@@ -1,17 +1,22 @@
 import hashlib
-from typing import List, BinaryIO
+import logging
+from typing import BinaryIO
+
 from fastapi import BackgroundTasks
-from src.core.exceptions import NotFoundError, ForbiddenError
-from src.database.uow import UnitOfWork
-from src.database.repositories.knowledge import DocumentRepository
-from src.providers.storage.base import BaseStorageProvider
-from src.models.knowledge import Document
-from src.schemas.document import DocumentResponse
 from sqlalchemy import select
-from src.models.auth import User
-from src.services.ingestion_service import IngestionService
-from src.database.session import AsyncSessionLocal
+
+logger = logging.getLogger(__name__)
+
 from src.core.config import settings
+from src.core.exceptions import ForbiddenError, NotFoundError
+from src.database.repositories.knowledge import DocumentRepository
+from src.database.session import AsyncSessionLocal
+from src.database.uow import UnitOfWork
+from src.models.auth import User
+from src.models.knowledge import Document
+from src.providers.storage.base import BaseStorageProvider
+from src.schemas.document import DocumentResponse
+from src.services.ingestion_service import IngestionService
 
 
 class DocumentService:
@@ -19,7 +24,7 @@ class DocumentService:
         self.uow = uow
         self.storage = storage
 
-    async def list_documents(self, workspace_id: str) -> List[DocumentResponse]:
+    async def list_documents(self, workspace_id: str) -> list[DocumentResponse]:
         async with self.uow:
 
             stmt = (
@@ -162,8 +167,8 @@ class DocumentService:
             await self.uow.commit()
         try:
             await self.storage.delete_file(storage_path)
-        except Exception:
-            pass
+        except Exception:  # noqa: BLE001  # storage provider may raise arbitrary errors
+            logger.debug("Storage cleanup failed for %s; file may already be deleted.", storage_path)
 
     async def toggle_document(
         self, doc_id: str, workspace_id: str, actor: User, is_enabled: bool

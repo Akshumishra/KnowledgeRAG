@@ -1,9 +1,9 @@
-from typing import AsyncGenerator, Dict, List
+from collections.abc import AsyncGenerator
+
 from google import genai
 from google.genai import types
-
-from src.providers.llm.base import BaseLLMProvider
 from src.llm.rag.constant import RAGConstant
+from src.providers.llm.base import BaseLLMProvider
 
 
 class GeminiProvider(BaseLLMProvider):
@@ -89,7 +89,7 @@ class GeminiProvider(BaseLLMProvider):
             if chunk.text:
                 yield chunk.text
 
-    async def list_models(self) -> List[Dict[str, str]]:
+    async def list_models(self) -> list[dict[str, str]]:
         return RAGConstant.FALLBACK_GEMINI_MODELS
 
     def supports_streaming(self) -> bool:

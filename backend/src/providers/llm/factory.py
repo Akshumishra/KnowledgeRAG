@@ -1,8 +1,8 @@
 from src.providers.llm.base import BaseLLMProvider
-from src.providers.llm.openai import OpenAIProvider
-from src.providers.llm.ollama import OllamaProvider
 from src.providers.llm.gemini import GeminiProvider
 from src.providers.llm.groq import GroqProvider
+from src.providers.llm.ollama import OllamaProvider
+from src.providers.llm.openai import OpenAIProvider
 from src.providers.llm.openrouter import OpenRouterProvider
 
 

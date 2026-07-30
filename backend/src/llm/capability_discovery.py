@@ -1,11 +1,10 @@
 import logging
-import asyncio
-from datetime import datetime, timezone
-from sqlalchemy.ext.asyncio import AsyncSession
-from typing import Dict, Any
+from datetime import UTC, datetime
 
-from src.models.settings import ModelCapability
+from sqlalchemy.ext.asyncio import AsyncSession
+
 from src.llm.capability_manager import ModelCapabilityManager
+from src.models.settings import ModelCapability
 
 logger = logging.getLogger(__name__)
 
@@ -87,7 +86,7 @@ class DiscoveryService:
                 _ = await anext(gen)
 
                 cap.capability_state = "Verified"
-                cap.last_verified = datetime.now(timezone.utc)
+                cap.last_verified = datetime.now(UTC)
                 self.session.add(cap)
                 await self.session.commit()
                 logger.info(
@@ -97,12 +96,12 @@ class DiscoveryService:
 
             except StopAsyncIteration:
                 cap.capability_state = "Verified"
-                cap.last_verified = datetime.now(timezone.utc)
+                cap.last_verified = datetime.now(UTC)
                 self.session.add(cap)
                 await self.session.commit()
                 return cap
 
-            except Exception as e:
+            except Exception as e:  # noqa: BLE001
                 error_msg = str(e)
                 removed_param = _extract_unsupported_param(error_msg, safe_kwargs)
 

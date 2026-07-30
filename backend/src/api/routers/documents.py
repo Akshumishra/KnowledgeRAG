@@ -1,20 +1,21 @@
-from fastapi import APIRouter, Depends, UploadFile, File, Form, BackgroundTasks
-from typing import List, Optional
 import os
+
+from fastapi import APIRouter, BackgroundTasks, Depends, File, UploadFile
+from fastapi.responses import StreamingResponse
+
+from src.api.dependencies import get_current_user, get_storage_provider, get_uow
 from src.core.config import settings
 from src.core.exceptions import ForbiddenError, NotFoundError
+from src.database.uow import UnitOfWork
+from src.models.auth import User
+from src.providers.storage.base import BaseStorageProvider
 from src.schemas.document import DocumentResponse, DocumentToggleRequest
 from src.services.document_service import DocumentService
-from src.database.uow import UnitOfWork
-from src.api.dependencies import get_uow, get_current_user, get_storage_provider
-from src.providers.storage.base import BaseStorageProvider
-from src.models.auth import User
-from fastapi.responses import StreamingResponse
 
 router = APIRouter(prefix="/documents", tags=["documents"])
 
 
-@router.get("/", response_model=List[DocumentResponse])
+@router.get("/", response_model=list[DocumentResponse])
 async def list_documents(
     uow: UnitOfWork = Depends(get_uow),
     storage: BaseStorageProvider = Depends(get_storage_provider),

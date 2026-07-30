@@ -1,5 +1,5 @@
-from typing import List
-from sqlalchemy import select, func
+
+from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.repositories.base import BaseRepository
 from src.models.chat import Conversation, Message
@@ -9,7 +9,7 @@ class ConversationRepository(BaseRepository[Conversation]):
     def __init__(self, session: AsyncSession):
         super().__init__(Conversation, session)
 
-    async def list_by_user(self, user_id: str, workspace_id: str) -> List[Conversation]:
+    async def list_by_user(self, user_id: str, workspace_id: str) -> list[Conversation]:
         stmt = (
             select(Conversation)
             .where(
@@ -27,7 +27,7 @@ class MessageRepository(BaseRepository[Message]):
     def __init__(self, session: AsyncSession):
         super().__init__(Message, session)
 
-    async def list_by_conversation(self, conversation_id: str) -> List[Message]:
+    async def list_by_conversation(self, conversation_id: str) -> list[Message]:
         stmt = (
             select(Message)
             .where(Message.conversation_id == conversation_id)

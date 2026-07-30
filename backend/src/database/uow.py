@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from typing import Optional
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.session import AsyncSessionLocal
 
@@ -12,7 +11,7 @@ class UnitOfWork:
 
     def __init__(self, session_factory=AsyncSessionLocal):
         self.session_factory = session_factory
-        self.session: Optional[AsyncSession] = None
+        self.session: AsyncSession | None = None
 
     async def __aenter__(self):
         self.session = self.session_factory()

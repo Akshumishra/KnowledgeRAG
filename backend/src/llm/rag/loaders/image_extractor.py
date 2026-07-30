@@ -2,12 +2,11 @@ from __future__ import annotations
 
 import base64
 import logging
-import pypdf
-import io
-import uuid
-from openai import AsyncOpenAI
 from pathlib import Path
-from typing import Any, Dict, List, Optional
+from typing import Any
+
+import pypdf
+from openai import AsyncOpenAI
 
 logger = logging.getLogger(__name__)
 
@@ -18,7 +17,7 @@ async def extract_and_describe_images(
     model_name: str,
     document_name: str,
     workspace_id: str,
-) -> List[Dict[str, Any]]:
+) -> list[dict[str, Any]]:
     """
     Extract images from a PDF and generate GPT-4o vision descriptions.
     Returns blocks with:
@@ -43,7 +42,7 @@ async def extract_and_describe_images(
             if not xobjects:
                 continue
 
-            for obj_name, obj_ref in xobjects.items():
+            for obj_ref in xobjects.values():
                 obj = obj_ref.get_object()
                 if obj.get("/Subtype") != "/Image":
                     continue
@@ -52,7 +51,7 @@ async def extract_and_describe_images(
                     image_data = _extract_image_bytes(obj)
                     if not image_data:
                         continue
-                except Exception:
+                except Exception:  # noqa: BLE001 S112  # skip unreadable image objects
                     continue
 
                 description = await _describe_image(
@@ -79,12 +78,12 @@ async def extract_and_describe_images(
         )
         return image_blocks
 
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Image extraction failed for %s: %s", path.name, e)
         return []
 
 
-def _extract_image_bytes(obj) -> Optional[bytes]:
+def _extract_image_bytes(obj) -> bytes | None:
     """Extract raw image bytes from a PDF XObject."""
     data = obj.get_data()
     if not data:
@@ -131,6 +130,6 @@ async def _describe_image(
             max_tokens=500,
         )
         return response.choices[0].message.content or ""
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         logger.warning("Vision description failed: %s", e)
         return ""

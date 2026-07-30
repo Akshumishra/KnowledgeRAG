@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import secrets
 from functools import lru_cache
-from typing import List
+
 from pydantic import model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -40,7 +40,7 @@ class Settings(BaseSettings):
     allowed_origins: str = "http://localhost:8000"
 
     @property
-    def allowed_origins_list(self) -> List[str]:
+    def allowed_origins_list(self) -> list[str]:
         return [o.strip() for o in self.allowed_origins.split(",") if o.strip()]
 
     @property
@@ -48,7 +48,7 @@ class Settings(BaseSettings):
         return self.app_env == "production"
 
     @model_validator(mode="after")
-    def generate_encryption_key_if_missing(self) -> "Settings":
+    def generate_encryption_key_if_missing(self) -> Settings:
         """
         Auto-generate a Fernet encryption key if none is configured.
         In production, ENCRYPTION_KEY must be set explicitly in .env.

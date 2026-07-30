@@ -1,5 +1,5 @@
-from typing import Optional, List
-from sqlalchemy import select, delete
+
+from sqlalchemy import delete, select
 from sqlalchemy.ext.asyncio import AsyncSession
 from src.database.repositories.base import BaseRepository
 from src.models.settings import LLMProvider
@@ -10,7 +10,7 @@ class LLMProviderRepository(BaseRepository[LLMProvider]):
     def __init__(self, session: AsyncSession):
         super().__init__(LLMProvider, session)
 
-    async def get_by_slug(self, slug: str) -> Optional[LLMProvider]:
+    async def get_by_slug(self, slug: str) -> LLMProvider | None:
         stmt = select(LLMProvider).where(LLMProvider.slug == slug.lower())
         result = await self.session.execute(stmt)
         return result.scalars().first()
@@ -22,7 +22,7 @@ class WorkspaceModelRepository(BaseRepository[WorkspaceModel]):
 
     async def get_for_provider(
         self, workspace_id: str, provider_id: str
-    ) -> List[WorkspaceModel]:
+    ) -> list[WorkspaceModel]:
         stmt = select(WorkspaceModel).where(
             WorkspaceModel.workspace_id == workspace_id,
             WorkspaceModel.provider_id == provider_id,
@@ -30,7 +30,7 @@ class WorkspaceModelRepository(BaseRepository[WorkspaceModel]):
         result = await self.session.execute(stmt)
         return list(result.scalars().all())
 
-    async def get_all_for_workspace(self, workspace_id: str) -> List[WorkspaceModel]:
+    async def get_all_for_workspace(self, workspace_id: str) -> list[WorkspaceModel]:
         stmt = select(WorkspaceModel).where(WorkspaceModel.workspace_id == workspace_id)
         result = await self.session.execute(stmt)
         return list(result.scalars().all())

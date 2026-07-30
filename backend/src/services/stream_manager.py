@@ -31,7 +31,7 @@ class StreamManager:
             for queue in list(self.clients[message_id]):
                 try:
                     await queue.put(event_string)
-                except Exception as e:
+                except (RuntimeError, asyncio.QueueFull) as e:
                     logger.error(f"Error putting event to queue: {e}")
 
     async def finish_stream(self, message_id: str):
@@ -40,8 +40,8 @@ class StreamManager:
             for queue in list(self.clients[message_id]):
                 try:
                     await queue.put(None)
-                except Exception:
-                    pass
+                except (RuntimeError, asyncio.QueueFull):
+                    logger.debug("Could not put sentinel None to queue; already closed.")
 
         # We don't instantly delete the buffer because a client might connect right as it finishes.
         # But we remove the clients set to free memory.

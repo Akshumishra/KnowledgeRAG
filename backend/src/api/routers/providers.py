@@ -1,21 +1,21 @@
+
 from fastapi import APIRouter, Depends
-from typing import List
-from pydantic import BaseModel
+
+from src.api.dependencies import get_current_user, get_service
+from src.models.auth import User
 from src.schemas.provider import (
-    ProviderResponse,
     APIKeyCreate,
-    ProviderToggleRequest,
     ProviderCreate,
+    ProviderResponse,
+    ProviderToggleRequest,
     SaveModelsRequest,
 )
 from src.services.provider_service import ProviderService
-from src.api.dependencies import get_service, get_current_user
-from src.models.auth import User
 
 router = APIRouter(prefix="/providers", tags=["providers"])
 
 
-@router.get("", response_model=List[ProviderResponse])
+@router.get("", response_model=list[ProviderResponse])
 async def list_providers(
     service: ProviderService = Depends(get_service(ProviderService)),
 ):
@@ -106,7 +106,7 @@ async def check_provider_health(
             provider_id, current_user.workspace_id, current_user
         )
         return {"healthy": is_healthy}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"healthy": False, "error": str(e)}
 
 
@@ -121,7 +121,7 @@ async def list_provider_models(
             provider_id, current_user.workspace_id, current_user
         )
         return {"models": models}
-    except Exception as e:
+    except Exception as e:  # noqa: BLE001
         return {"models": [], "error": str(e)}
 
 

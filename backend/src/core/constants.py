@@ -1,10 +1,10 @@
-from typing import List, Dict
+from typing import ClassVar
 
 
 class DefaultLLMProviders:
     """Default LLM Providers to seed the database."""
 
-    PROVIDERS = [
+    PROVIDERS: ClassVar[list[dict]] = [
         {
             "slug": "openai",
             "name": "OpenAI",
