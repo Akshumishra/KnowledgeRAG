@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends
-from src.services.analytics_service import AnalyticsService
+
+from src.api.dependencies import get_current_user, get_uow
 from src.database.uow import UnitOfWork
-from src.api.dependencies import get_uow, get_current_user
 from src.models.auth import User
+from src.services.analytics_service import AnalyticsService
 
 router = APIRouter(prefix="/analytics", tags=["analytics"])
 

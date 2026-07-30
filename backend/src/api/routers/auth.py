@@ -1,22 +1,22 @@
-from typing import List
 from fastapi import APIRouter, Depends
+
+from src.api.dependencies import get_current_user, get_uow
+from src.database.uow import UnitOfWork
+from src.models.auth import User
 from src.schemas.auth import (
-    RegisterRequest,
-    LoginRequest,
-    TokenResponse,
     CreateWorkspaceRequest,
-    JoinWorkspaceRequest,
-    Workspace,
-    RefreshRequest,
-    VerifyEmailRequest,
     ForgotPasswordRequest,
-    ResetPasswordRequest,
+    JoinWorkspaceRequest,
+    LoginRequest,
+    RefreshRequest,
+    RegisterRequest,
     ResendOtpRequest,
+    ResetPasswordRequest,
+    TokenResponse,
+    VerifyEmailRequest,
+    Workspace,
 )
 from src.services.auth_service import AuthService
-from src.database.uow import UnitOfWork
-from src.api.dependencies import get_uow, get_current_user
-from src.models.auth import User
 
 router = APIRouter(prefix="/auth", tags=["auth"])
 
@@ -24,14 +24,14 @@ router = APIRouter(prefix="/auth", tags=["auth"])
 @router.post("/register")
 async def register(data: RegisterRequest, uow: UnitOfWork = Depends(get_uow)):
     service = AuthService(uow)
-    user, _ = await service.register(data)
+    _user, _ = await service.register(data)
     return {"message": "Verification email sent"}
 
 
 @router.post("/verify-email", response_model=TokenResponse)
 async def verify_email(data: VerifyEmailRequest, uow: UnitOfWork = Depends(get_uow)):
     service = AuthService(uow)
-    user, tokens = await service.verify_email_otp(data.email, data.otp)
+    _user, tokens = await service.verify_email_otp(data.email, data.otp)
     return tokens
 
 
@@ -65,7 +65,7 @@ async def reset_password(
 @router.post("/login", response_model=TokenResponse)
 async def login(data: LoginRequest, uow: UnitOfWork = Depends(get_uow)):
     service = AuthService(uow)
-    user, tokens = await service.login(data)
+    _user, tokens = await service.login(data)
     return tokens
 
 
@@ -75,7 +75,7 @@ async def refresh(data: RefreshRequest, uow: UnitOfWork = Depends(get_uow)):
     return await service.refresh(data.refresh_token)
 
 
-@router.get("/workspaces", response_model=List[Workspace])
+@router.get("/workspaces", response_model=list[Workspace])
 async def list_workspaces(
     uow: UnitOfWork = Depends(get_uow), current_user: User = Depends(get_current_user)
 ):

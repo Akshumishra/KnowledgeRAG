@@ -67,5 +67,7 @@ async def get_current_user(
                 user.is_owner = False
 
             return user
-    except Exception as e:
-        raise UnauthorizedError(str(e))
+    except UnauthorizedError:
+        raise
+    except (ValueError, KeyError, AttributeError) as e:
+        raise UnauthorizedError(str(e)) from e

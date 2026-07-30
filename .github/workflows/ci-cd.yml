@@ -52,17 +52,15 @@ jobs:
         run: pip install --quiet uv
 
       - name: Install dependencies (including dev extras)
-        run: uv pip install --system ".[dev]"
+        run: uv pip install --system ".[dev]" ruff
 
       - name: Lint with Ruff
-        run: |
-          uv pip install --system ruff
-          ruff check backend/src/ --output-format=github
+        run: ruff check backend/src/ --output-format=github
 
       - name: Run tests with Pytest
         run: |
           python -m pytest backend/tests/ \
-            --cov=backend/src \
+            --cov=src \
             --cov-report=xml:backend/coverage.xml \
             --cov-report=term-missing \
             --import-mode=importlib \

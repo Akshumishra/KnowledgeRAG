@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, Request
 from fastapi.responses import StreamingResponse
+
+from src.api.dependencies import get_current_user, get_llm_factory, get_uow
+from src.database.uow import UnitOfWork
+from src.models.auth import User
 from src.schemas.chat import ChatRequest
 from src.services.chat_service import ChatService
-from src.database.uow import UnitOfWork
-from src.api.dependencies import get_uow, get_current_user, get_llm_factory
-from src.models.auth import User
 
 router = APIRouter(prefix="/chat", tags=["chat"])
 
