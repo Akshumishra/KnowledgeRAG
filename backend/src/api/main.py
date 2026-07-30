@@ -31,7 +31,7 @@ from src.api.routers import (
 from src.core.config import settings
 from src.core.constants import DefaultLLMProviders
 from src.core.logging import setup_logging
-from src.database.session import engine
+from src.database.session import _get_engine
 from src.models.base import Base
 from src.models.chat import Message
 from src.models.settings import LLMProvider
@@ -47,6 +47,7 @@ async def lifespan(app: FastAPI):
     Path(settings.upload_dir).mkdir(parents=True, exist_ok=True)
     logger.info("Upload directory ready: %s", settings.upload_dir)
 
+    engine = _get_engine()
     async with engine.begin() as conn:
         if not settings.database_url.startswith("sqlite"):
             await conn.execute(text("CREATE EXTENSION IF NOT EXISTS vector;"))
