@@ -79,6 +79,7 @@ jobs:
     runs-on: ubuntu-latest
     needs: test
     permissions:
+      actions: read
       security-events: write
       contents: read
 
