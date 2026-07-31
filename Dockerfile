@@ -41,7 +41,7 @@ COPY frontend/ ./frontend/
 RUN mkdir -p /app/uploads /app/logs
 
 # Startup script: run DB migrations then start the server
-RUN printf '#!/bin/sh\nset -e\necho "Running DB migrations..."\ncd /app/backend\nalembic upgrade head\necho "Starting server..."\nexec uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 2\n' > /app/start.sh && chmod +x /app/start.sh
+RUN printf '#!/bin/sh\nset -e\necho "Checking DB initialization..."\ncd /app/backend\npython src/database/stamp_db.py\necho "Running DB migrations..."\nalembic upgrade head\necho "Starting server..."\nexec uvicorn src.api.main:app --host 0.0.0.0 --port 8000 --workers 2\n' > /app/start.sh && chmod +x /app/start.sh
 
 # Port to expose
 EXPOSE 8000
