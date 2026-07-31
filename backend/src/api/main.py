@@ -144,8 +144,9 @@ async def http_exception_handler(request: Request, exc: HTTPException):
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
+    import traceback
     logger.error("Unhandled exception: %s", exc)
     return JSONResponse(
         status_code=500,
-        content={"detail": "An internal server error occurred"},
+        content={"detail": str(exc), "traceback": traceback.format_exc()},
     )
