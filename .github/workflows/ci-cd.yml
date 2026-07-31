@@ -93,12 +93,13 @@ jobs:
       - name: Run Semgrep
         run: semgrep scan --config="p/python" --config="p/fastapi" --config="p/owasp-top-ten" --sarif --output=semgrep.sarif || true
 
-      - name: Upload Semgrep SARIF to GitHub Security tab
-        uses: github/codeql-action/upload-sarif@v4
+      - name: Upload Semgrep SARIF as Artifact
+        uses: actions/upload-artifact@v4
         if: always()
         with:
-          sarif_file: semgrep.sarif
-          category: semgrep
+          name: semgrep-results
+          path: semgrep.sarif
+          retention-days: 7
 
   build:
     name: Build Docker Image
