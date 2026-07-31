@@ -24,6 +24,8 @@ jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
+    environment:
+      name: KnowledgeRAG
     env:
       APP_ENV:        testing
       DATABASE_URL:   "sqlite+aiosqlite:///:memory:"
@@ -78,6 +80,8 @@ jobs:
     name: SAST Scan (Semgrep)
     runs-on: ubuntu-latest
     needs: test
+    environment:
+      name: KnowledgeRAG
     permissions:
       actions: read
       security-events: write
@@ -105,6 +109,8 @@ jobs:
     name: Build Docker Image
     runs-on: ubuntu-latest
     needs: sast-scan
+    environment:
+      name: KnowledgeRAG
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
 
     outputs:
@@ -151,6 +157,8 @@ jobs:
     name: Container Scan (Trivy)
     runs-on: ubuntu-latest
     needs: build
+    environment:
+      name: KnowledgeRAG
     permissions:
       security-events: write
       contents: read
