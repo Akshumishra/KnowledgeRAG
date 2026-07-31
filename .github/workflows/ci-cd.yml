@@ -307,7 +307,15 @@ jobs:
             docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
             exit 0
           else
-            echo "Smoke test FAILED! Triggering rollback to stable image..."
+            echo "Smoke test FAILED! Downloading App Service logs for debugging..."
+            # Download logs zip, extract, and print the docker container logs
+            az webapp log download --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --log-file logs.zip || true
+            unzip -q logs.zip -d logs || true
+            echo "=== CONTAINER LOGS ==="
+            cat logs/LogFiles/**/*.log || echo "No logs found."
+            echo "======================"
+            
+            echo "Triggering rollback to stable image..."
             az webapp config container set --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --container-image-name ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
             az webapp restart --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
             echo "Rollback initiated. Please check the Azure Portal for details."
