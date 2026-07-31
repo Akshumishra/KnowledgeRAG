@@ -308,7 +308,7 @@ jobs:
             exit 0
           else
             echo "Smoke test FAILED! Triggering rollback to stable image..."
-            az webapp config container set --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --docker-custom-image-name ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
+            az webapp config container set --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }} --container-image-name ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:stable
             az webapp restart --name ${{ env.APP_NAME }} --resource-group ${{ env.RESOURCE_GROUP }}
             echo "Rollback initiated. Please check the Azure Portal for details."
             exit 1
