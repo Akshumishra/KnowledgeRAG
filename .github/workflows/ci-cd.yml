@@ -13,13 +13,13 @@ concurrency:
   cancel-in-progress: true
 
 env:
-  PYTHON_VERSION:  ${{ vars.PYTHON_VERSION }}
-  REGISTRY:        ${{ vars.ACR_REGISTRY }}
-  IMAGE_NAME:      ${{ vars.IMAGE_NAME }}
-  APP_NAME:        ${{ vars.AZURE_APP_NAME }}
-  RESOURCE_GROUP:  ${{ vars.AZURE_RESOURCE_GROUP }}
-  ACR_NAME:        ${{ vars.ACR_NAME }}
-  LIVE_URL:        ${{ vars.LIVE_URL }}
+  PYTHON_VERSION:  ${{ vars.PYTHON_VERSION || '3.11' }}
+  REGISTRY:        ${{ vars.ACR_REGISTRY || 'ghcr.io' }}
+  IMAGE_NAME:      ${{ vars.IMAGE_NAME || 'knowledgerag' }}
+  APP_NAME:        ${{ vars.AZURE_APP_NAME || 'knowledgerag' }}
+  RESOURCE_GROUP:  ${{ vars.AZURE_RESOURCE_GROUP || 'rg-knowledgerag' }}
+  ACR_NAME:        ${{ vars.ACR_NAME || 'crknowledgerag' }}
+  LIVE_URL:        ${{ vars.LIVE_URL || 'http://localhost' }}
 jobs:
   test:
     name: Test
