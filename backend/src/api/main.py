@@ -13,7 +13,7 @@ if sys.platform == "win32":
 
 from datetime import UTC, datetime, timedelta
 
-from fastapi import FastAPI, Request
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import FileResponse, HTMLResponse, JSONResponse
 from fastapi.staticfiles import StaticFiles
@@ -131,6 +131,15 @@ async def serve_spa(full_path: str = ""):
     if not index.exists():
         return HTMLResponse("<h1>Frontend not built yet</h1>", status_code=503)
     return FileResponse(str(index))
+
+
+@app.exception_handler(HTTPException)
+async def http_exception_handler(request: Request, exc: HTTPException):
+    return JSONResponse(
+        status_code=exc.status_code,
+        content={"detail": exc.detail},
+        headers=getattr(exc, "headers", None)
+    )
 
 
 @app.exception_handler(Exception)

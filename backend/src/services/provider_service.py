@@ -38,10 +38,10 @@ class ProviderService:
     async def create_provider(
         self, data: ProviderCreate, workspace_id: str, actor: User
     ) -> ProviderResponse:
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError("Only owners can create LLM providers.")
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError("Only owners can create LLM providers.")
+
             new_provider = LLMProvider(
                 name=data.name,
                 slug=data.slug,
@@ -82,10 +82,10 @@ class ProviderService:
     async def get_api_keys(
         self, workspace_id: str, actor: "User", scope: str = "workspace"
     ) -> list[dict[str, Any]]:
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError()
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError()
+
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             keys = await repo.list(workspace_id=workspace_id)
 
@@ -114,10 +114,10 @@ class ProviderService:
         actor: "User",
         scope: str = "workspace",
     ) -> dict[str, Any]:
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError()
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError()
+
             encrypted_val = encrypt(data.api_key)
             preview = f"sk-...{data.api_key[-4:]}" if len(data.api_key) > 8 else "***"
 
@@ -158,10 +158,10 @@ class ProviderService:
     async def delete_api_key(
         self, key_id: str, workspace_id: str, actor: "User", scope: str = "workspace"
     ) -> None:
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError()
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError()
+
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             key = await repo.get(key_id)
             if not key or key.workspace_id != workspace_id:
@@ -177,10 +177,10 @@ class ProviderService:
         scope: str,
         is_enabled: bool,
     ) -> None:
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError()
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError()
+
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             key = await repo.get(key_id)
             if not key or key.workspace_id != workspace_id:
@@ -275,10 +275,10 @@ class ProviderService:
         actor: "User",
     ) -> None:
         """Replace the model list for a specific API key in a workspace. Owner-only."""
-        if not await self._is_workspace_owner(actor.id, workspace_id):
-            raise ForbiddenError()
-
         async with self.uow:
+            if not await self._is_workspace_owner(actor.id, workspace_id):
+                raise ForbiddenError()
+
             # Delete only models for this specific api_key_id
             stmt = delete(WorkspaceModel).where(
                 WorkspaceModel.workspace_id == workspace_id,
