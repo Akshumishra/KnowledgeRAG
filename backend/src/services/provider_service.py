@@ -89,12 +89,19 @@ class ProviderService:
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             keys = await repo.list(workspace_id=workspace_id)
 
+            # Build a provider id->slug map to return human-readable slugs
+            provider_repo = LLMProviderRepository(self.uow.session)
+            all_providers = await provider_repo.list()
+            id_to_slug = {p.id: p.slug for p in all_providers}
+
             result = []
             for k in keys:
+                # Return slug as provider_id so the frontend can match by slug
+                provider_slug = id_to_slug.get(k.provider_id, k.provider_id)
                 result.append(
                     {
                         "id": k.id,
-                        "provider_id": k.provider_id,
+                        "provider_id": provider_slug,
                         "display_name": k.display_name,
                         "key_preview": k.key_preview,
                         "full_key": None,
@@ -118,12 +125,20 @@ class ProviderService:
             if not await self._is_workspace_owner(actor.id, workspace_id):
                 raise ForbiddenError()
 
+            # Resolve slug -> actual provider UUID
+            provider_repo = LLMProviderRepository(self.uow.session)
+            provider = await provider_repo.get_by_slug(data.provider_id)
+            if not provider:
+                from src.core.exceptions import NotFoundError
+                raise NotFoundError("LLMProvider", data.provider_id)
+            resolved_provider_id = provider.id
+
             encrypted_val = encrypt(data.api_key)
             preview = f"sk-...{data.api_key[-4:]}" if len(data.api_key) > 8 else "***"
 
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             existing = await repo.get_by_org_and_provider(
-                workspace_id, data.provider_id
+                workspace_id, resolved_provider_id
             )
             if existing:
                 existing.encrypted_key = encrypted_val
@@ -134,7 +149,7 @@ class ProviderService:
                 key_obj = repo.add(
                     WorkspaceAPIKey(
                         workspace_id=workspace_id,
-                        provider_id=data.provider_id,
+                        provider_id=resolved_provider_id,
                         display_name=data.display_name,
                         encrypted_key=encrypted_val,
                         key_preview=preview,
@@ -146,7 +161,7 @@ class ProviderService:
 
             return {
                 "id": key_obj.id,
-                "provider_id": key_obj.provider_id,
+                "provider_id": provider.slug,  # Return slug so frontend can display name
                 "display_name": getattr(key_obj, "display_name", None),
                 "key_preview": key_obj.key_preview,
                 "full_key": None,
