@@ -282,9 +282,15 @@ class ProviderService:
         async with self.uow:
             repo = WorkspaceModelRepository(self.uow.session)
             all_models = await repo.get_all_for_workspace(workspace_id)
+
+            provider_repo = LLMProviderRepository(self.uow.session)
+            all_providers = await provider_repo.list()
+            id_to_slug = {p.id: p.slug for p in all_providers}
+
             result: dict[str, list[dict[str, str]]] = {}
             for m in all_models:
-                result.setdefault(m.provider_id, []).append(
+                provider_slug = id_to_slug.get(m.provider_id, m.provider_id)
+                result.setdefault(provider_slug, []).append(
                     {"name": m.model_name, "api_key_id": m.api_key_id}
                 )
             return result
@@ -302,10 +308,18 @@ class ProviderService:
             if not await self._is_workspace_owner(actor.id, workspace_id):
                 raise ForbiddenError()
 
+            # Resolve slug -> actual provider UUID
+            provider_repo = LLMProviderRepository(self.uow.session)
+            provider = await provider_repo.get_by_slug(provider_id)
+            if not provider:
+                from src.core.exceptions import NotFoundError
+                raise NotFoundError("LLMProvider", provider_id)
+            resolved_provider_id = provider.id
+
             # Delete only models for this specific api_key_id
             stmt = delete(WorkspaceModel).where(
                 WorkspaceModel.workspace_id == workspace_id,
-                WorkspaceModel.provider_id == provider_id,
+                WorkspaceModel.provider_id == resolved_provider_id,
                 WorkspaceModel.api_key_id == api_key_id
             )
             await self.uow.session.execute(stmt)
@@ -316,7 +330,7 @@ class ProviderService:
                     self.uow.session.add(
                         WorkspaceModel(
                             workspace_id=workspace_id,
-                            provider_id=provider_id,
+                            provider_id=resolved_provider_id,
                             api_key_id=api_key_id,
                             model_name=name,
                             is_enabled=True,
