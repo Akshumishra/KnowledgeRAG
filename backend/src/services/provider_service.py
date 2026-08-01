@@ -219,9 +219,6 @@ class ProviderService:
             key = await self._resolve_key(provider_id, workspace_id, actor)
             if not key:
                 raise NotFoundError("API Key", provider_id)
-            
-            from src.models.settings import LLMProvider
-            from sqlalchemy import select
             stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
             slug_res = await self.uow.session.execute(stmt)
             provider_slug = slug_res.scalar() or provider_id
@@ -240,8 +237,6 @@ class ProviderService:
             if not key:
                 return []
 
-            from src.models.settings import LLMProvider
-            from sqlalchemy import select
             stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
             slug_res = await self.uow.session.execute(stmt)
             provider_slug = slug_res.scalar() or provider_id

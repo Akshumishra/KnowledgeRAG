@@ -35,6 +35,7 @@ from src.llm.rag.retrieval.search import Retriever
 from src.models.auth import User
 from src.models.chat import Message
 from src.models.knowledge import Document
+from src.models.settings import LLMProvider
 from src.providers.llm.base import BaseLLMProvider
 from src.schemas.chat import ChatRequest
 from src.services.provider_service import ProviderService
@@ -158,7 +159,6 @@ class ChatService:
                     )
                 api_key = decrypt(api_key_record.encrypted_key)
                 
-            from src.models.settings import LLMProvider
             stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
             slug_res = await self.uow.session.execute(stmt)
             provider_slug = slug_res.scalar() or provider_id
