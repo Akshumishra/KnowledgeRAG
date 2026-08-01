@@ -1,9 +1,9 @@
 from fastapi import Depends
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from jose import JWTError
 from sqlalchemy import select
 
 from src.core.exceptions import UnauthorizedError
-from jose import JWTError
 from src.core.security import decode_token
 from src.database.repositories.auth import UserRepository
 from src.database.uow import UnitOfWork
