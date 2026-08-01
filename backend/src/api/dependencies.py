@@ -3,6 +3,7 @@ from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from sqlalchemy import select
 
 from src.core.exceptions import UnauthorizedError
+from jose import JWTError
 from src.core.security import decode_token
 from src.database.repositories.auth import UserRepository
 from src.database.uow import UnitOfWork
@@ -69,5 +70,5 @@ async def get_current_user(
             return user
     except UnauthorizedError:
         raise
-    except (ValueError, KeyError, AttributeError) as e:
+    except (ValueError, KeyError, AttributeError, JWTError) as e:
         raise UnauthorizedError(str(e)) from e
