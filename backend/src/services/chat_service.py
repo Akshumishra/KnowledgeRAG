@@ -157,8 +157,13 @@ class ChatService:
                         f"No valid API key configured for {provider_id}"
                     )
                 api_key = decrypt(api_key_record.encrypted_key)
+                
+            from src.models.settings import LLMProvider
+            stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
+            slug_res = await self.uow.session.execute(stmt)
+            provider_slug = slug_res.scalar() or provider_id
 
-            llm_provider: BaseLLMProvider = self.llm_factory(provider_id, api_key)
+            llm_provider: BaseLLMProvider = self.llm_factory(provider_slug, api_key)
 
         queue = asyncio.Queue()
 

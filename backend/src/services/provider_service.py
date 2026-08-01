@@ -219,8 +219,15 @@ class ProviderService:
             key = await self._resolve_key(provider_id, workspace_id, actor)
             if not key:
                 raise NotFoundError("API Key", provider_id)
+            
+            from src.models.settings import LLMProvider
+            from sqlalchemy import select
+            stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
+            slug_res = await self.uow.session.execute(stmt)
+            provider_slug = slug_res.scalar() or provider_id
+
             api_key = decrypt(key.encrypted_key)
-            get_provider(provider_id, api_key)
+            get_provider(provider_slug, api_key)
             is_healthy = True
             await self.uow.commit()
             return is_healthy
@@ -233,8 +240,14 @@ class ProviderService:
             if not key:
                 return []
 
+            from src.models.settings import LLMProvider
+            from sqlalchemy import select
+            stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
+            slug_res = await self.uow.session.execute(stmt)
+            provider_slug = slug_res.scalar() or provider_id
+
             api_key = decrypt(key.encrypted_key)
-            provider = get_provider(provider_id, api_key)
+            provider = get_provider(provider_slug, api_key)
             models = await provider.list_models()
             for model in models:
                 stmt = select(ModelCapability).where(
