@@ -162,7 +162,7 @@ export function renderChat(container) {
 
       // Map dynamic provider info
       providerSelect.innerHTML = uniqueProviderIds.map(p => {
-        const dbProvider = allProviders.find(x => x.slug === p);
+        const dbProvider = allProviders.find(x => x.id === p || x.slug === p);
         const name = dbProvider ? dbProvider.name : p;
         return `<option value="${p}">${name}</option>`;
       }).join('');
