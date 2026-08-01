@@ -29,16 +29,33 @@ def upgrade() -> None:
 
     # --- organization_api_keys: fix provider_id FK (was String(50), now FK to llm_providers) ---
     # We do this safely: add new FK-aware column, copy data, drop old, rename.
-    # But since the column type is the same (String), we only need to add the FK constraint.
-    # Use try/except in case the FK already exists on some envs.
     # --- Data Migration: Ensure referenced provider_ids exist in llm_providers ---
-    # This prevents ForeignKeyViolation if a provider_id exists in org_api_keys but not in llm_providers
+    # In earlier versions, organization_api_keys stored the slug (e.g., 'openrouter') instead of the UUID id.
+    # We must update these records to point to the actual UUID id in llm_providers.
+    op.execute(
+        """
+        UPDATE organization_api_keys
+        SET provider_id = llm_providers.id
+        FROM llm_providers
+        WHERE organization_api_keys.provider_id = llm_providers.slug;
+        """
+    )
+    op.execute(
+        """
+        UPDATE organization_models
+        SET provider_id = llm_providers.id
+        FROM llm_providers
+        WHERE organization_models.provider_id = llm_providers.slug;
+        """
+    )
+    # If there are any truly missing providers (not in llm_providers at all), insert them using their provider_id (which might be custom)
     op.execute(
         """
         INSERT INTO llm_providers (id, name, slug, is_active, is_local, created_at, updated_at)
         SELECT DISTINCT provider_id, provider_id, provider_id, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         FROM organization_api_keys
         WHERE provider_id IS NOT NULL AND provider_id NOT IN (SELECT id FROM llm_providers)
+        ON CONFLICT (slug) DO NOTHING;
         """
     )
     op.execute(
@@ -47,6 +64,7 @@ def upgrade() -> None:
         SELECT DISTINCT provider_id, provider_id, provider_id, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
         FROM organization_models
         WHERE provider_id IS NOT NULL AND provider_id NOT IN (SELECT id FROM llm_providers)
+        ON CONFLICT (slug) DO NOTHING;
         """
     )
 
