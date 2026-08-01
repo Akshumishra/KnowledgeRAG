@@ -31,6 +31,25 @@ def upgrade() -> None:
     # We do this safely: add new FK-aware column, copy data, drop old, rename.
     # But since the column type is the same (String), we only need to add the FK constraint.
     # Use try/except in case the FK already exists on some envs.
+    # --- Data Migration: Ensure referenced provider_ids exist in llm_providers ---
+    # This prevents ForeignKeyViolation if a provider_id exists in org_api_keys but not in llm_providers
+    op.execute(
+        """
+        INSERT INTO llm_providers (id, name, slug, is_active, is_local, created_at, updated_at)
+        SELECT DISTINCT provider_id, provider_id, provider_id, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM organization_api_keys
+        WHERE provider_id IS NOT NULL AND provider_id NOT IN (SELECT id FROM llm_providers)
+        """
+    )
+    op.execute(
+        """
+        INSERT INTO llm_providers (id, name, slug, is_active, is_local, created_at, updated_at)
+        SELECT DISTINCT provider_id, provider_id, provider_id, true, false, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP
+        FROM organization_models
+        WHERE provider_id IS NOT NULL AND provider_id NOT IN (SELECT id FROM llm_providers)
+        """
+    )
+
     with op.batch_alter_table("organization_api_keys") as batch_op:
         try:
             batch_op.create_foreign_key(
