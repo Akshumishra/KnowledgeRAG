@@ -61,9 +61,14 @@ class ProviderService:
         async with self.uow:
             repo = WorkspaceAPIKeyRepository(self.uow.session)
             keys = await repo.list(workspace_id=workspace_id)
+            
+            provider_repo = LLMProviderRepository(self.uow.session)
+            all_providers = await provider_repo.list()
+            id_to_slug = {p.id: p.slug for p in all_providers}
+            
             return [
                 {
-                    "provider_id": k.provider_id,
+                    "provider_id": id_to_slug.get(k.provider_id, k.provider_id),
                     "is_enabled": getattr(k, "is_enabled", True),
                     "health_status": "untested",
                 }
