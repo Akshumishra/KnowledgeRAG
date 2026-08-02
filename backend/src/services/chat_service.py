@@ -23,6 +23,7 @@ from src.database.repositories.chat import (
     ConversationRepository,
     MessageRepository,
 )
+from src.database.repositories.settings import LLMProviderRepository
 from src.database.repositories.workspace import WorkspaceAPIKeyRepository
 from src.database.uow import UnitOfWork
 from src.llm.capability_discovery import (
@@ -35,7 +36,6 @@ from src.llm.rag.retrieval.search import Retriever
 from src.models.auth import User
 from src.models.chat import Message
 from src.models.knowledge import Document
-from src.models.settings import LLMProvider
 from src.providers.llm.base import BaseLLMProvider
 from src.schemas.chat import ChatRequest
 from src.services.provider_service import ProviderService
@@ -144,8 +144,16 @@ class ChatService:
             await self.uow.commit()
             assistant_msg_id = assistant_msg.id
 
-            provider_id = data.model_provider or "openai"
+            provider_slug = data.model_provider or "openai"
             model_name = data.model_name or "gpt-5-nano"
+
+            # Always resolve slug → UUID first, since all DB FK columns store UUIDs
+            _provider_repo = LLMProviderRepository(self.uow.session)
+            _provider_obj = await _provider_repo.get_by_slug(provider_slug)
+            if _provider_obj:
+                provider_id = _provider_obj.id   # UUID for DB lookups
+            else:
+                provider_id = provider_slug       # fallback (won't resolve keys, but avoids crash)
 
             api_key = data.api_key
             if not api_key:
@@ -155,15 +163,12 @@ class ChatService:
                 )
                 if not api_key_record or not api_key_record.is_valid:
                     raise BadRequestError(
-                        f"No valid API key configured for {provider_id}"
+                        f"No valid API key configured for {provider_slug}"
                     )
                 api_key = decrypt(api_key_record.encrypted_key)
-                
-            stmt = select(LLMProvider.slug).where(LLMProvider.id == provider_id)
-            slug_res = await self.uow.session.execute(stmt)
-            provider_slug = slug_res.scalar() or provider_id
 
             llm_provider: BaseLLMProvider = self.llm_factory(provider_slug, api_key)
+
 
         queue = asyncio.Queue()
 
