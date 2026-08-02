@@ -66,11 +66,12 @@ Built with a lightning-fast FastAPI/PostgreSQL backend and a sleek, zero-depende
 
 ## Azure Deployment
 
-This repository includes fully automated deployment scripts for Microsoft Azure.
+This repository includes fully automated deployment to Microsoft Azure.
 
 1. **First-time Deployment**: 
    Run `.\Deployment_Scripts\deploy_to_azure.ps1`. 
    The script will interactively ask for your API keys and SMTP credentials, provision a Resource Group, Azure Container Registry, PostgreSQL Flexible Server, and an App Service, and securely inject your configuration.
 
 2. **Deploying Updates**:
-   When you make changes to the code, simply run `.\Deployment_Scripts\update_azure.ps1` to rebuild the Docker image and push the latest version to your live environment.
+   Updates are completely automated via **GitHub Actions CI/CD**.
+   When you make changes to the code, simply commit and push your changes to the `main` branch. The CI/CD pipeline (`.github/workflows/ci-cd.yml`) will automatically build the new Docker image, run tests, and push the latest version to your live Azure App Service environment.
