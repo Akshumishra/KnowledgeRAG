@@ -62,7 +62,7 @@ $fernetBytes = New-Object Byte[] 32
 [Security.Cryptography.RNGCryptoServiceProvider]::Create().GetBytes($fernetBytes)
 $fernetKey = [Convert]::ToBase64String($fernetBytes)
 
-$dbUrl = 'postgresql+psycopg://dbadmin:' + $dbPassword + 'Akshita@123' + $dbName + '.postgres.database.azure.com:5432/ragdb?sslmode=require'
+$dbUrl = 'postgresql+psycopg://dbadmin:' + [uri]::EscapeDataString($dbPassword) + '@' + $dbName + '.postgres.database.azure.com:5432/ragdb?sslmode=require'
 
 Write-Host ''
 Write-Host '[1/6] Registering required Azure Providers & Creating Resource Group (' + $rgName + ')...' -ForegroundColor Cyan
